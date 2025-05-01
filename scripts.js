@@ -1,6 +1,6 @@
 // API 설정
 const API_BASE_URL = 'http://localhost:8443';
-const FRONT_URL = 'https://hanjungho.github.io/project-pet-talk-test/'; // 프론트엔드 기본 URL (index.html 제외)
+const FRONT_URL = 'https://hanjungho.github.io/project-pet-talk-test'; // 프론트엔드 기본 URL (index.html 제외)
 const API_ENDPOINTS = {
     CHECK_NICKNAME: '/api/v1/auth/check-nickname',
     REGISTER: '/api/v1/auth/register',

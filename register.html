@@ -9,14 +9,12 @@
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
         
+        // 현재 URL에서 기본 경로 추출
+        const baseUrl = window.location.href.split('/register')[0];
+        
         // 메인 페이지로 리다이렉트하면서 토큰 전달
-        window.location.href = '/?token=' + token;
-    </script>
-    <script>
-        if (window.location.pathname === "/register.html") {
-            const newURL = "/register" + window.location.search;
-            window.history.replaceState({}, document.title, newURL);
-        }
+        // 기본 경로를 유지하여 프로젝트 경로가 포함되도록 함
+        window.location.href = baseUrl + '/?token=' + token;
     </script>
 </head>
 <body>
