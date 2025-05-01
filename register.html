@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>펫톡 - 리다이렉트 중...</title>
+    <script>
+        // URL에서 토큰 파라미터 추출
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        // 메인 페이지로 리다이렉트하면서 토큰 전달
+        window.location.href = '/?token=' + token;
+    </script>
+    <script>
+        if (window.location.pathname === "/register.html") {
+            const newURL = "/register" + window.location.search;
+            window.history.replaceState({}, document.title, newURL);
+        }
+    </script>
+</head>
+<body>
+    <p>잠시만 기다려주세요. 리다이렉트 중입니다...</p>
+</body>
+</html>

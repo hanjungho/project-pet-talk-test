@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>펫톡 - 반려동물 전문가와 연결하세요</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        // 잘못된 URL 경로 감지 및 수정
+        if (window.location.pathname.includes('index.html/register')) {
+          // 현재 URL에서 토큰 추출
+          const urlParams = new URLSearchParams(window.location.search);
+          const token = urlParams.get('token');
+          
+          if (token) {
+            // 올바른 URL로 리다이렉트
+            window.location.href = window.location.origin + '?token=' + token;
+          } else {
+            // 토큰이 없는 경우 홈으로 리다이렉트
+            window.location.href = window.location.origin;
+          }
+        }
+
+        // index.html 파일 내 <script> 태그 안에 추가
+        document.addEventListener('DOMContentLoaded', function() {
+        // URL에서 토큰 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        if (token) {
+            console.log('임시 토큰 발견:', token);
+            // 토큰 처리 로직...
+            
+            // 회원가입 모달 표시
+            const authModal = document.getElementById('auth-modal');
+            authModal.style.display = 'block';
+            
+            // 회원가입 탭으로 전환
+            const registerTab = document.querySelector('.tab-btn[data-tab="register"]');
+            registerTab.click();
+        }
+        });
+    </script>
+    <script>
+        // 페이지 로드 시 URL 파라미터 확인
+        document.addEventListener('DOMContentLoaded', function() {
+            // URL에서 토큰 확인
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            
+            if (token) {
+                console.log('임시 토큰 발견:', token);
+                
+                // URL에서 토큰 파라미터 제거
+                const url = new URL(window.location.href);
+                url.searchParams.delete('token');
+                window.history.replaceState({}, document.title, url);
+                
+                // 토큰 저장
+                localStorage.setItem('tempToken', token);
+                
+                // 회원가입 모달 표시
+                setTimeout(function() {
+                    const authModal = document.getElementById('auth-modal');
+                    if (authModal) {
+                        authModal.style.display = 'block';
+                        
+                        // 회원가입 탭으로 전환
+                        const registerTab = document.querySelector('.tab-btn[data-tab="register"]');
+                        if (registerTab) {
+                            registerTab.click();
+                        }
+                    }
+                }, 500); // 약간의 지연을 두어 DOM이 완전히 로드되도록 함
+            }
+        });
+    </script>
+    <script>
+        if (window.location.pathname === "/register.html") {
+            const newURL = "/register" + window.location.search;
+            window.history.replaceState({}, document.title, newURL);
+        }
+    </script>
+</head>
+<body>
+    <div id="app">
+        <!-- 헤더 -->
+        <header class="header">
+            <div class="container">
+                <div class="logo">
+                    <img src="https://via.placeholder.com/40x40" alt="펫톡 로고">
+                    <h1>펫톡</h1>
+                </div>
+                <nav class="nav">
+                    <ul id="nav-menu">
+                        <li><a href="#" class="active" data-page="home">홈</a></li>
+                        <li><a href="#" data-page="trainers">훈련사 찾기</a></li>
+                        <li><a href="#" data-page="community">커뮤니티</a></li>
+                        <li><a href="#" data-page="about">소개</a></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons" id="auth-section">
+                    <button id="login-btn" class="btn btn-primary">로그인</button>
+                    <div id="user-profile" class="user-profile" style="display: none;">
+                        <img src="https://via.placeholder.com/32x32" alt="프로필" id="profile-img">
+                        <div class="dropdown">
+                            <span id="user-name">사용자명</span>
+                            <div class="dropdown-content">
+                                <a href="#" id="profile-btn">내 프로필</a>
+                                <a href="#" id="logout-btn">로그아웃</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 메인 콘텐츠 -->
+        <main>
+            <!-- 인증 모달 -->
+            <div id="auth-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="login">로그인</button>
+                        <button class="tab-btn" data-tab="register">회원가입</button>
+                    </div>
+                    
+                    <div id="login-tab" class="tab-content active">
+                        <h2>펫톡에 로그인하세요</h2>
+                        <div class="oauth-buttons">
+                            <button class="oauth-btn kakao">
+                                <i class="fab fa-kickstarter"></i> 카카오로 로그인
+                            </button>
+                            <button class="oauth-btn naver">
+                                <i class="fas fa-n"></i> 네이버로 로그인
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="register-tab" class="tab-content">
+                        <h2>회원가입 완료하기</h2>
+                        <form id="register-form">
+                            <div class="form-group">
+                                <label for="name">이름</label>
+                                <input type="text" id="name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="nickname">닉네임</label>
+                                <input type="text" id="nickname" name="nickname" required>
+                                <small id="nickname-status"></small>
+                            </div>
+                            <div class="form-group">
+                                <label>프로필 이미지</label>
+                                <div class="avatar-selection">
+                                    <div class="avatar-option selected">
+                                        <img src="https://via.placeholder.com/50x50?text=1" data-url="https://via.placeholder.com/200x200?text=1" alt="아바타 1">
+                                    </div>
+                                    <div class="avatar-option">
+                                        <img src="https://via.placeholder.com/50x50?text=2" data-url="https://via.placeholder.com/200x200?text=2" alt="아바타 2">
+                                    </div>
+                                    <div class="avatar-option">
+                                        <img src="https://via.placeholder.com/50x50?text=3" data-url="https://via.placeholder.com/200x200?text=3" alt="아바타 3">
+                                    </div>
+                                    <div class="avatar-option">
+                                        <img src="https://via.placeholder.com/50x50?text=4" data-url="https://via.placeholder.com/200x200?text=4" alt="아바타 4">
+                                    </div>
+                                </div>
+                                <input type="hidden" id="profile-image-url" name="profileImageUrl" value="https://via.placeholder.com/200x200?text=1">
+                            </div>
+                            <button type="submit" class="btn btn-primary">가입 완료</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 페이지 콘텐츠 -->
+            <div class="container">
+                <!-- 홈 페이지 -->
+                <div id="home-page" class="page active">
+                    <section class="hero">
+                        <div class="hero-content">
+                            <h2>언제 어디서나 반려동물 전문가 상담</h2>
+                            <p>인증된 반려동물 훈련사와 연결하여 훈련, 행동 및 관리에 대한 맞춤형 가이드를 받으세요.</p>
+                            <button class="btn btn-primary" id="get-started-btn">시작하기</button>
+                        </div>
+                        <div class="hero-image">
+                            <img src="https://via.placeholder.com/500x300" alt="행복한 반려동물과 주인">
+                        </div>
+                    </section>
+
+                    <section class="features">
+                        <h2>펫톡을 선택해야 하는 이유</h2>
+                        <div class="feature-cards">
+                            <div class="feature-card">
+                                <i class="fas fa-certificate"></i>
+                                <h3>인증된 훈련사</h3>
+                                <p>모든 훈련사는 검증된 자격증을 가진 전문가입니다.</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-comments"></i>
+                                <h3>즉시 소통</h3>
+                                <p>훈련사와 직접 채팅으로 실시간 조언과 해결책을 얻을 수 있습니다.</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-paw"></i>
+                                <h3>모든 반려동물 환영</h3>
+                                <p>개와 고양이부터 새와 파충류까지 - 모든 동물에 대한 전문가가 있습니다.</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- 프로필 페이지 -->
+                <div id="profile-page" class="page">
+                    <div class="profile-container">
+                        <div class="profile-header">
+                            <div class="profile-avatar">
+                                <img src="https://via.placeholder.com/150x150" alt="프로필" id="profile-page-img">
+                            </div>
+                            <div class="profile-info">
+                                <h2 id="profile-page-name">사용자 이름</h2>
+                                <p id="profile-page-email">user@example.com</p>
+                                <button class="btn btn-secondary" id="edit-profile-btn">프로필 수정</button>
+                            </div>
+                        </div>
+                        <div class="profile-tabs">
+                            <button class="profile-tab active" data-tab="info">내 정보</button>
+                            <button class="profile-tab" data-tab="chats">내 채팅</button>
+                            <button class="profile-tab" data-tab="posts">내 게시글</button>
+                        </div>
+                        <div class="profile-content">
+                            <div id="info-tab" class="profile-tab-content active">
+                                <h3>계정 정보</h3>
+                                <div class="info-group">
+                                    <span class="info-label">닉네임:</span>
+                                    <span id="profile-nickname">닉네임</span>
+                                </div>
+                                <div class="info-group">
+                                    <span class="info-label">계정 유형:</span>
+                                    <span id="profile-role">일반 사용자</span>
+                                </div>
+                                <div class="danger-zone">
+                                    <h3>위험 구역</h3>
+                                    <button class="btn btn-danger" id="delete-account-btn">계정 삭제</button>
+                                </div>
+                            </div>
+                            <div id="chats-tab" class="profile-tab-content">
+                                <h3>내 대화</h3>
+                                <div class="empty-state">
+                                    <i class="fas fa-comments"></i>
+                                    <p>아직 대화 내역이 없습니다.</p>
+                                </div>
+                            </div>
+                            <div id="posts-tab" class="profile-tab-content">
+                                <h3>내 게시글</h3>
+                                <div class="empty-state">
+                                    <i class="fas fa-file-alt"></i>
+                                    <p>아직 작성한 게시글이 없습니다.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 프로필 수정 모달 -->
+                <div id="edit-profile-modal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h2>프로필 수정</h2>
+                        <form id="edit-profile-form">
+                            <div class="form-group">
+                                <label for="edit-nickname">닉네임</label>
+                                <input type="text" id="edit-nickname" name="nickname" required>
+                                <small id="edit-nickname-status"></small>
+                            </div>
+                            <div class="form-group">
+                                <label>프로필 이미지</label>
+                                <div class="avatar-selection">
+                                    <div class="avatar-option">
+                                        <img src="https://via.placeholder.com/50x50?text=1" data-url="https://via.placeholder.com/200x200?text=1" alt="아바타 1">
+                                    </div>
+                                    <div class="avatar-option">
+                                        <img src="https://via.placeholder.com/50x50?text=2" data-url="https://via.placeholder.com/200x200?text=2" alt="아바타 2">
+                                    </div>
+                                    <div class="avatar-option">
+                                        <img src="https://via.placeholder.com/50x50?text=3" data-url="https://via.placeholder.com/200x200?text=3" alt="아바타 3">
+                                    </div>
+                                    <div class="avatar-option">
+                                        <img src="https://via.placeholder.com/50x50?text=4" data-url="https://via.placeholder.com/200x200?text=4" alt="아바타 4">
+                                    </div>
+                                </div>
+                                <input type="hidden" id="edit-profile-image-url" name="profileImageUrl">
+                            </div>
+                            <button type="submit" class="btn btn-primary">변경사항 저장</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 계정 삭제 확인 모달 -->
+                <div id="confirm-delete-modal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h2>계정 삭제 확인</h2>
+                        <p>정말로 계정을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.</p>
+                        <div class="modal-actions">
+                            <button class="btn btn-secondary" id="cancel-delete-btn">취소</button>
+                            <button class="btn btn-danger" id="confirm-delete-btn">계정 삭제</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 다른 페이지 (플레이스홀더 콘텐츠) -->
+                <div id="trainers-page" class="page">
+                    <h2>반려동물 훈련사 찾기</h2>
+                    <p>이 기능은 곧 제공될 예정입니다. 기대해 주세요!</p>
+                </div>
+                
+                <div id="community-page" class="page">
+                    <h2>커뮤니티 포럼</h2>
+                    <p>이 기능은 곧 제공될 예정입니다. 기대해 주세요!</p>
+                </div>
+                
+                <div id="about-page" class="page">
+                    <h2>펫톡 소개</h2>
+                    <p>펫톡은 반려동물 주인과 인증된 훈련사를 연결하여 전문적인 조언을 제공하는 플랫폼입니다.</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-logo">
+                        <h3>펫톡</h3>
+                        <p>반려동물과 전문가를 연결합니다</p>
+                    </div>
+                    <div class="footer-links">
+                        <h4>바로가기</h4>
+                        <ul>
+                            <li><a href="#">홈</a></li>
+                            <li><a href="#">훈련사</a></li>
+                            <li><a href="#">커뮤니티</a></li>
+                            <li><a href="#">소개</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-contact">
+                        <h4>연락처</h4>
+                        <p>이메일: info@pettalk.com</p>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-facebook"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2025 펫톡. 모든 권리 보유.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 알림 모달 -->
+    <div id="notification-modal" class="notification">
+        <div class="notification-content">
+            <span class="notification-message">성공!</span>
+        </div>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
