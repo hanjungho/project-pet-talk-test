@@ -1,7 +1,7 @@
 // auth.js - 인증 관련 핵심 기능
 
 // API 기본 URL
-const API_BASE_URL = 'https://api.hanjungho.pet-talk-test.com';
+const API_BASE_URL = 'http://localhost:8443';
 
 // 로컬 스토리지 키
 const TOKEN_KEY = 'pettalk_auth_token';

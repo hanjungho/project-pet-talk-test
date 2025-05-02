@@ -1,7 +1,7 @@
 // profile.js - 프로필 페이지 기능
 
 // API 기본 URL (auth.js에서 가져옴)
-// const API_BASE_URL = 'https://api.hanjungho.pet-talk-test.com';
+// const API_BASE_URL = 'http://localhost:8443';
 
 document.addEventListener('DOMContentLoaded', () => {
     // 인증 상태 확인

@@ -1,7 +1,7 @@
 // trainers.js - 훈련사 목록 관련 기능
 
 // API 기본 URL (auth.js에서 가져옴)
-// const API_BASE_URL = 'https://api.hanjungho.pet-talk-test.com';
+// const API_BASE_URL = 'http://localhost:8443';
 
 // 전역 변수
 let trainers = []; // 훈련사 목록을 저장할 배열
