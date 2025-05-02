@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>훈련사 상세 정보 - 펫톡</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/trainer-detail.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+</head>
+<body>
+    <header id="header">
+        <div class="container">
+            <div class="logo">
+                <a href="index.html">펫톡</a>
+            </div>
+            <nav id="nav-menu">
+                <ul>
+                    <li><a href="index.html">홈</a></li>
+                    <li><a href="trainers.html">훈련사 찾기</a></li>
+                    <li><a href="community.html">커뮤니티</a></li>
+                    <li id="login-menu"><a href="login.html">로그인</a></li>
+                    <li id="profile-menu" style="display: none;"><a href="profile.html">내 프로필</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="trainer-detail-section">
+            <div class="container">
+                <div class="loading" id="trainer-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>훈련사 정보를 불러오는 중...</p>
+                </div>
+                
+                <div id="trainer-detail-content" style="display: none;">
+                    <div class="trainer-profile">
+                        <div class="trainer-header">
+                            <div class="trainer-image">
+                                <img id="trainer-image" src="/api/placeholder/200/200" alt="훈련사 프로필">
+                            </div>
+                            <div class="trainer-info">
+                                <h1 id="trainer-name">훈련사 이름</h1>
+                                <div class="trainer-rating">
+                                    <span id="trainer-rating">5.0</span>
+                                    <div class="stars">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <span id="review-count">(32개 후기)</span>
+                                </div>
+                                <div class="trainer-experience">
+                                    <i class="fas fa-briefcase"></i>
+                                    <span id="experience-years">경력 5년</span>
+                                </div>
+                                <div class="trainer-specialties">
+                                    <h3>전문 분야</h3>
+                                    <div id="specialties-list" class="tag-list">
+                                        <!-- 전문 분야 태그가 여기에 동적으로 추가됩니다 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="trainer-introduction">
+                            <h2>소개</h2>
+                            <p id="trainer-introduction-text">훈련사 소개글이 표시됩니다.</p>
+                        </div>
+                        
+                        <div class="trainer-certifications">
+                            <h2>자격증</h2>
+                            <ul id="certifications-list">
+                                <!-- 자격증 목록이 여기에 동적으로 추가됩니다 -->
+                            </ul>
+                        </div>
+                        
+                        <div class="apply-section">
+                            <button id="apply-btn" class="btn primary">상담 신청하기</button>
+                        </div>
+                    </div>
+                    
+                    <div class="trainer-reviews">
+                        <h2>후기 <span id="total-reviews">(32)</span></h2>
+                        <div id="reviews-list">
+                            <!-- 후기 목록이 여기에 동적으로 추가됩니다 -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 상담 신청 모달 -->
+                <div id="apply-modal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h2>상담 신청하기</h2>
+                        <form id="apply-form">
+                            <input type="hidden" id="trainer-id" name="trainerId">
+                            
+                            <div class="form-group">
+                                <label for="content">상담 내용</label>
+                                <textarea id="content" name="content" rows="5" placeholder="반려동물의 문제 행동이나 훈련 목표에 대해 자세히 설명해주세요." required></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="image-upload">이미지 첨부 (선택사항)</label>
+                                <input type="file" id="image-upload" name="imageUpload" accept="image/*">
+                                <input type="hidden" id="image-url" name="imageUrl">
+                                <div class="image-preview-container" style="display: none;">
+                                    <img id="image-preview" src="" alt="이미지 미리보기">
+                                    <button type="button" id="remove-image" class="btn secondary">삭제</button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="video-url">동영상 URL (선택사항)</label>
+                                <input type="text" id="video-url" name="videoUrl" placeholder="반려동물 영상의 유튜브 또는 기타 동영상 URL을 입력하세요.">
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn secondary cancel-btn">취소</button>
+                                <button type="submit" class="btn primary">신청하기</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h3>펫톡</h3>
+                    <p>반려동물과 함께하는 행복한 일상</p>
+                </div>
+                <div class="footer-links">
+                    <h4>바로가기</h4>
+                    <ul>
+                        <li><a href="about.html">소개</a></li>
+                        <li><a href="trainers.html">훈련사 찾기</a></li>
+                        <li><a href="community.html">커뮤니티</a></li>
+                        <li><a href="faq.html">자주 묻는 질문</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>문의하기</h4>
+                    <p>이메일: info@pettalk.kr</p>
+                    <p>전화: 02-123-4567</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 펫톡. 모든 권리 보유.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/trainer-detail.js"></script>
+</body>
+</html>
