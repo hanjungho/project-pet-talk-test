@@ -3,124 +3,1952 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>펫톡 - 반려동물 훈련사 매칭 서비스</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <title>PetTalk - 반려동물 교육 트레이너 매칭 서비스</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #6c757d;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --light-color: #f8f9fc;
+            --dark-color: #5a5c69;
+        }
+        
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
+                'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fc;
+        }
+        
+        .navbar-brand img {
+            height: 40px;
+        }
+        
+        .auth-container {
+            margin-top: 80px;
+            max-width: 500px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .page-section {
+            padding: 50px 0;
+        }
+        
+        .trainer-card {
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .trainer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .trainer-img {
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 5px solid white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .star-rating {
+            color: gold;
+        }
+        
+        footer {
+            background-color: #4e73df;
+            color: white;
+            padding: 20px 0;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            vertical-align: text-bottom;
+            border: 0.25em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
+        }
+        
+        @keyframes spinner-border {
+            to { transform: rotate(360deg); }
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        
+        .review-card {
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .apply-form-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+    </style>
 </head>
 <body>
-    <header id="header">
+    <!-- 네비게이션 바 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
         <div class="container">
-            <div class="logo">
-                <a href="index.html">펫톡</a>
-            </div>
-            <nav id="nav-menu">
-                <ul>
-                    <li><a href="index.html">홈</a></li>
-                    <li><a href="trainers.html">훈련사 찾기</a></li>
-                    <li><a href="community.html">커뮤니티</a></li>
-                    <li id="login-menu"><a href="login.html">로그인</a></li>
-                    <li id="profile-menu" style="display: none;"><a href="profile.html">내 프로필</a></li>
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-paw me-2"></i>PetTalk
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="nav-home">홈</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="nav-trainers">트레이너</a>
+                    </li>
+                    <li class="nav-item authenticated hidden">
+                        <a class="nav-link" href="#" id="nav-applications">신청 내역</a>
+                    </li>
+                    <li class="nav-item trainer-only hidden">
+                        <a class="nav-link" href="#" id="nav-trainer-applications">트레이너 신청 관리</a>
+                    </li>
                 </ul>
-            </nav>
+                <ul class="navbar-nav">
+                    <li class="nav-item not-authenticated">
+                        <a class="nav-link" href="#" id="nav-login">
+                            <i class="fas fa-sign-in-alt me-1"></i>로그인
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown authenticated hidden">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <span id="username-display">사용자</span>
+                            <img id="user-profile-img" class="rounded-circle ms-2" style="width: 30px; height: 30px;">
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" id="nav-profile">프로필</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="nav-logout">로그아웃</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </header>
+    </nav>
 
-    <main>
-        <section class="hero">
-            <div class="container">
-                <h1>반려동물과 함께 더 행복한 일상을 만들어요</h1>
-                <p>전문 훈련사와 함께 반려동물의 문제 행동을 해결하고 더 나은 관계를 만들어보세요.</p>
-                <div class="cta-buttons">
-                    <a href="trainers.html" class="btn primary">훈련사 찾기</a>
-                    <a href="register.html" class="btn secondary" id="register-btn">회원가입</a>
-                </div>
-            </div>
-        </section>
+    <!-- 로딩 스피너 -->
+    <div id="loading-spinner" class="d-flex justify-content-center align-items-center hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.8); z-index: 9999;">
+        <div class="text-center">
+            <div class="loading-spinner"></div>
+            <div class="mt-2">로딩 중...</div>
+        </div>
+    </div>
 
-        <section class="features">
-            <div class="container">
-                <h2>펫톡 서비스 특징</h2>
-                <div class="feature-cards">
-                    <div class="card">
-                        <i class="fas fa-certificate"></i>
-                        <h3>인증된 전문 훈련사</h3>
-                        <p>엄격한 심사를 통과한 자격을 갖춘 전문 훈련사만 활동합니다.</p>
-                    </div>
-                    <div class="card">
-                        <i class="fas fa-comments"></i>
-                        <h3>실시간 상담</h3>
-                        <p>언제 어디서나 훈련사와 실시간으로 소통하며 문제를 해결할 수 있습니다.</p>
-                    </div>
-                    <div class="card">
-                        <i class="fas fa-users"></i>
-                        <h3>커뮤니티</h3>
-                        <p>다른 반려인들과 경험을 공유하고 도움을 받을 수 있습니다.</p>
+    <!-- 토스트 메시지 -->
+    <div class="toast-container"></div>
+    
+    <!-- 페이지 컨테이너 -->
+    <div class="container mt-5 pt-3">
+        <!-- 홈 페이지 -->
+        <div id="home-page" class="page">
+            <div class="px-4 py-5 my-5 text-center">
+                <h1 class="display-5 fw-bold text-body-emphasis">PetTalk</h1>
+                <div class="col-lg-6 mx-auto">
+                    <p class="lead mb-4">반려동물 교육의 새로운 시작! 전문 트레이너와 함께 반려동물의 행동 교정과 훈련을 시작해보세요.</p>
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                        <button type="button" id="home-browse-trainers" class="btn btn-primary btn-lg px-4 gap-3">트레이너 찾기</button>
+                        <button type="button" id="home-get-started" class="btn btn-outline-secondary btn-lg px-4">시작하기</button>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <section class="testimonials">
-            <div class="container">
-                <h2>이용자 후기</h2>
-                <div class="testimonial-slider">
-                    <div class="testimonial">
-                        <div class="quote">
-                            <p>"펫톡을 통해 만난 훈련사 선생님 덕분에 우리 강아지의 분리불안이 크게 개선되었어요. 정말 감사합니다!"</p>
-                        </div>
-                        <div class="author">
-                            <img src="/api/placeholder/50/50" alt="이용자 사진">
-                            <p>김지영님</p>
+            <div class="row mb-5">
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-search fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">트레이너 찾기</h5>
+                            <p class="card-text">전문 트레이너의 프로필, 자격증, 경력 등을 확인하고 필요한 서비스를 제공할 수 있는 트레이너를 찾아보세요.</p>
                         </div>
                     </div>
-                    <div class="testimonial">
-                        <div class="quote">
-                            <p>"전문적인 조언을 받아 고양이의 화장실 문제를 해결했어요. 이제는 스트레스 없이 함께 지낼 수 있게 되었습니다."</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-comments fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">문의 및 신청</h5>
+                            <p class="card-text">마음에 드는 트레이너를 찾았다면, 교육 서비스에 대해 문의하고 상담을 신청할 수 있습니다.</p>
                         </div>
-                        <div class="author">
-                            <img src="/api/placeholder/50/50" alt="이용자 사진">
-                            <p>이현우님</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-paw fa-3x mb-3 text-primary"></i>
+                            <h5 class="card-title">교육 서비스</h5>
+                            <p class="card-text">반려동물의 특성과 필요에 맞는 맞춤형 교육 서비스를 받고 더 행복한 반려 생활을 즐겨보세요.</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
-    </main>
+        </div>
 
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-logo">
-                    <h3>펫톡</h3>
-                    <p>반려동물과 함께하는 행복한 일상</p>
+        <!-- 로그인 페이지 -->
+        <div id="login-page" class="page hidden">
+            <div class="auth-container mx-auto text-center">
+                <h2 class="mb-4">로그인</h2>
+                <p class="mb-4">소셜 계정으로 간편하게 로그인하세요</p>
+                
+                <div class="d-grid gap-3 col-12 mx-auto">
+                    <button class="btn btn-lg btn-outline-primary" id="naver-login">
+                        <img src="https://developers.naver.com/inc/devcenter/images/favicon.ico" width="20" height="20" class="me-2">
+                        네이버 로그인
+                    </button>
+                    <button class="btn btn-lg btn-outline-warning" id="kakao-login">
+                        <img src="https://developers.kakao.com/sdk/js/resources/kakao.png" width="20" height="20" class="me-2">
+                        카카오 로그인
+                    </button>
                 </div>
-                <div class="footer-links">
-                    <h4>바로가기</h4>
-                    <ul>
-                        <li><a href="about.html">소개</a></li>
-                        <li><a href="trainers.html">훈련사 찾기</a></li>
-                        <li><a href="community.html">커뮤니티</a></li>
-                        <li><a href="faq.html">자주 묻는 질문</a></li>
-                    </ul>
+            </div>
+        </div>
+
+        <!-- 회원가입 페이지 -->
+        <div id="register-page" class="page hidden">
+            <div class="auth-container mx-auto">
+                <h2 class="mb-4 text-center">회원가입</h2>
+                <p class="mb-4 text-center">소셜 계정으로 인증되었습니다. 프로필 정보를 입력해주세요.</p>
+                
+                <form id="register-form" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="register-name" class="form-label">이름</label>
+                        <input type="text" class="form-control" id="register-name" required>
+                        <div class="invalid-feedback">이름을 입력해주세요.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="register-nickname" class="form-label">닉네임</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="register-nickname" required>
+                            <button class="btn btn-outline-secondary" type="button" id="check-nickname">중복확인</button>
+                        </div>
+                        <div id="nickname-feedback" class="form-text"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="register-profile-image" class="form-label">프로필 이미지 URL</label>
+                        <input type="url" class="form-control" id="register-profile-image" placeholder="https://example.com/image.jpg">
+                        <div class="form-text">이미지 URL을 입력하지 않으면 기본 이미지가 설정됩니다.</div>
+                    </div>
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">가입하기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 트레이너 목록 페이지 -->
+        <div id="trainers-page" class="page hidden">
+            <h2 class="mb-4">트레이너 목록</h2>
+            <div class="row" id="trainers-container">
+                <!-- 트레이너 카드가 여기에 동적으로 추가됩니다 -->
+            </div>
+        </div>
+
+        <!-- 트레이너 상세 페이지 -->
+        <div id="trainer-detail-page" class="page hidden">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card shadow text-center p-3 mb-4">
+                        <img id="trainer-detail-img" src="/api/placeholder/150/150" class="profile-img mx-auto mb-3" alt="Trainer Profile">
+                        <h4 id="trainer-detail-name">트레이너 이름</h4>
+                        <div id="trainer-detail-rating" class="star-rating mb-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                            <span id="trainer-detail-rating-value">4.5</span>
+                            <span class="text-muted">(<span id="trainer-detail-review-count">24</span>개의 리뷰)</span>
+                        </div>
+                        <p class="text-muted">경력 <span id="trainer-detail-experience">5</span>년</p>
+                        <div class="mb-3">
+                            <h6 class="text-primary">전문 분야</h6>
+                            <div id="trainer-detail-specializations">
+                                <!-- 전문 분야 태그가 여기에 동적으로 추가됩니다 -->
+                            </div>
+                        </div>
+                        <button id="trainer-detail-apply-btn" class="btn btn-primary authenticated hidden">
+                            <i class="fas fa-paper-plane me-1"></i> 교육 신청하기
+                        </button>
+                        <button id="trainer-detail-login-to-apply-btn" class="btn btn-outline-primary not-authenticated">
+                            <i class="fas fa-sign-in-alt me-1"></i> 로그인하여 신청하기
+                        </button>
+                    </div>
                 </div>
-                <div class="footer-contact">
-                    <h4>문의하기</h4>
-                    <p>이메일: info@pettalk.kr</p>
-                    <p>전화: 02-123-4567</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
+                <div class="col-md-8">
+                    <div class="card shadow mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">트레이너 소개</h5>
+                        </div>
+                        <div class="card-body">
+                            <p id="trainer-detail-introduction">트레이너 소개 내용입니다.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">자격증</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul id="trainer-detail-certifications" class="list-group list-group-flush">
+                                <!-- 자격증 목록이 여기에 동적으로 추가됩니다 -->
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h5 class="mb-0">리뷰</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="trainer-detail-reviews">
+                                <!-- 리뷰 목록이 여기에 동적으로 추가됩니다 -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 펫톡. 모든 권리 보유.</p>
+        </div>
+
+        <!-- 신청 양식 페이지 -->
+        <div id="apply-form-page" class="page hidden">
+            <div class="apply-form-container">
+                <h2 class="mb-4">교육 신청하기</h2>
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0" id="apply-trainer-name">트레이너에게 신청하기</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="apply-form" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label for="apply-content" class="form-label">신청 내용</label>
+                                <textarea class="form-control" id="apply-content" rows="5" required
+                                    placeholder="반려동물의 종류, 나이, 성별, 특성 및 교육이 필요한 부분 등 자세히 적어주세요."></textarea>
+                                <div class="invalid-feedback">신청 내용을 입력해주세요.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="apply-image-url" class="form-label">반려동물 사진 URL</label>
+                                <input type="url" class="form-control" id="apply-image-url"
+                                    placeholder="https://example.com/pet-image.jpg">
+                                <div class="form-text">반려동물 사진을 첨부하면 더 정확한 상담이 가능합니다.</div>
+                            </div>
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary">신청하기</button>
+                                <button type="button" id="apply-cancel" class="btn btn-outline-secondary">취소</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 신청 내역 페이지 -->
+        <div id="applications-page" class="page hidden">
+            <h2 class="mb-4">나의 신청 내역</h2>
+            <div class="row" id="applications-container">
+                <!-- 신청 내역 카드가 여기에 동적으로 추가됩니다 -->
+            </div>
+        </div>
+
+        <!-- 트레이너용 신청 관리 페이지 -->
+        <div id="trainer-applications-page" class="page hidden trainer-only">
+            <h2 class="mb-4">트레이너 신청 관리</h2>
+            <div class="d-flex mb-3">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary active" data-status="all">전체</button>
+                    <button type="button" class="btn btn-outline-primary" data-status="PENDING">대기중</button>
+                    <button type="button" class="btn btn-outline-primary" data-status="APPROVED">승인</button>
+                    <button type="button" class="btn btn-outline-primary" data-status="REJECTED">거절</button>
+                </div>
+            </div>
+            <div class="row" id="trainer-applications-container">
+                <!-- 신청 내역 카드가 여기에 동적으로 추가됩니다 -->
+            </div>
+        </div>
+
+        <!-- 프로필 페이지 -->
+        <div id="profile-page" class="page hidden">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card shadow text-center p-3 mb-4">
+                        <img id="profile-img" src="/api/placeholder/150/150" class="profile-img mx-auto mb-3" alt="Profile">
+                        <h4 id="profile-name">사용자 이름</h4>
+                        <p class="text-muted" id="profile-email">user@example.com</p>
+                        <button class="btn btn-outline-primary btn-sm mb-2" id="profile-edit-btn">
+                            <i class="fas fa-edit me-1"></i> 프로필 수정
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" id="profile-withdraw-btn">
+                            <i class="fas fa-user-times me-1"></i> 회원 탈퇴
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card shadow mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">프로필 정보</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="profile-edit-form" class="needs-validation" novalidate>
+                                <div class="mb-3">
+                                    <label for="profile-edit-nickname" class="form-label">닉네임</label>
+                                    <input type="text" class="form-control" id="profile-edit-nickname" required>
+                                    <div class="invalid-feedback">닉네임을 입력해주세요.</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="profile-edit-image" class="form-label">프로필 이미지 URL</label>
+                                    <input type="url" class="form-control" id="profile-edit-image" placeholder="https://example.com/image.jpg">
+                                </div>
+                                <div class="d-grid gap-2 mt-4">
+                                    <button type="submit" class="btn btn-primary">저장하기</button>
+                                    <button type="button" id="profile-edit-cancel" class="btn btn-outline-secondary">취소</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h5 class="mb-0">내 리뷰</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="my-reviews-container">
+                                <!-- 리뷰 목록이 여기에 동적으로 추가됩니다 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 리뷰 작성 모달 -->
+        <div class="modal fade" id="reviewModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">리뷰 작성하기</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="review-form">
+                            <input type="hidden" id="review-apply-id">
+                            <div class="mb-3">
+                                <label class="form-label">평점</label>
+                                <div class="star-rating-input">
+                                    <div class="btn-group" role="group">
+                                        <input type="radio" class="btn-check" name="review-rating" id="rating-1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="rating-1">1 <i class="far fa-star"></i></label>
+                                        
+                                        <input type="radio" class="btn-check" name="review-rating" id="rating-2" value="2">
+                                        <label class="btn btn-outline-warning" for="rating-2">2 <i class="far fa-star"></i></label>
+                                        
+                                        <input type="radio" class="btn-check" name="review-rating" id="rating-3" value="3">
+                                        <label class="btn btn-outline-warning" for="rating-3">3 <i class="far fa-star"></i></label>
+                                        
+                                        <input type="radio" class="btn-check" name="review-rating" id="rating-4" value="4">
+                                        <label class="btn btn-outline-warning" for="rating-4">4 <i class="far fa-star"></i></label>
+                                        
+                                        <input type="radio" class="btn-check" name="review-rating" id="rating-5" value="5" checked>
+                                        <label class="btn btn-outline-warning" for="rating-5">5 <i class="far fa-star"></i></label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="review-title" class="form-label">제목</label>
+                                <input type="text" class="form-control" id="review-title" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="review-comment" class="form-label">내용</label>
+                                <textarea class="form-control" id="review-comment" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="review-image" class="form-label">이미지 URL (선택사항)</label>
+                                <input type="url" class="form-control" id="review-image">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" id="submit-review">리뷰 등록</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <footer class="mt-5">
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-paw me-2"></i>PetTalk</h5>
+                    <p>반려동물 교육 트레이너 매칭 서비스</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>&copy; 2023 PetTalk. All rights reserved.</p>
+                </div>
             </div>
         </div>
     </footer>
 
-    <script src="js/auth.js"></script>
-    <script src="js/main.js"></script>
+    <!-- 스크립트 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 설정 변수
+        const CONFIG = {
+            BACKEND_URL: 'http://localhost:8443',
+            FRONTEND_URL: 'https://hanjungho.github.io/project-pet-talk-test',
+            DEFAULT_PROFILE_IMAGE: 'https://via.placeholder.com/150'
+        };
+        
+        // UI 관련 함수
+        const UI = {
+            // 현재 활성화된 페이지 ID
+            currentPage: null,
+            
+            // 페이지 표시 함수
+            showPage: (pageId) => {
+                // 모든 페이지 숨기기
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.add('hidden');
+                },
+            
+            // 이벤트 핸들러 설정
+            setupEventHandlers: () => {
+                // 네비게이션 이벤트
+                document.getElementById('nav-home').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    UI.showPage('home-page');
+                });
+                
+                document.getElementById('nav-trainers').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    UI.loadTrainers();
+                    UI.showPage('trainers-page');
+                });
+                
+                document.getElementById('nav-applications').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    UI.loadApplications();
+                });
+                
+                document.getElementById('nav-trainer-applications').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    UI.loadTrainerApplications();
+                });
+                
+                document.getElementById('nav-login').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    UI.showPage('login-page');
+                });
+                
+                document.getElementById('nav-logout').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    AUTH.logout();
+                });
+                
+                document.getElementById('nav-profile').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    UI.loadProfile();
+                });
+                
+                // 홈페이지 버튼 이벤트
+                document.getElementById('home-browse-trainers').addEventListener('click', () => {
+                    UI.loadTrainers();
+                    UI.showPage('trainers-page');
+                });
+                
+                document.getElementById('home-get-started').addEventListener('click', () => {
+                    if (AUTH.isAuthenticated()) {
+                        UI.loadTrainers();
+                        UI.showPage('trainers-page');
+                    } else {
+                        UI.showPage('login-page');
+                    }
+                });
+                
+                // 로그인 버튼 이벤트
+                document.getElementById('naver-login').addEventListener('click', () => {
+                    AUTH.startLogin('naver');
+                });
+                
+                document.getElementById('kakao-login').addEventListener('click', () => {
+                    AUTH.startLogin('kakao');
+                });
+                
+                // 회원가입 폼 이벤트
+                document.getElementById('check-nickname').addEventListener('click', async () => {
+                    const nickname = document.getElementById('register-nickname').value.trim();
+                    if (!nickname) {
+                        document.getElementById('nickname-feedback').innerHTML = 
+                            '<span class="text-danger">닉네임을 입력해주세요.</span>';
+                        return;
+                    }
+                    
+                    try {
+                        const response = await API.auth.checkNickname(nickname);
+                        const available = response.data?.available || false;
+                        
+                        if (available) {
+                            document.getElementById('nickname-feedback').innerHTML = 
+                                '<span class="text-success">사용 가능한 닉네임입니다.</span>';
+                            document.getElementById('register-nickname').setAttribute('data-valid', 'true');
+                        } else {
+                            document.getElementById('nickname-feedback').innerHTML = 
+                                '<span class="text-danger">이미 사용 중인 닉네임입니다.</span>';
+                            document.getElementById('register-nickname').setAttribute('data-valid', 'false');
+                        }
+                    } catch (error) {
+                        console.error('닉네임 확인 오류:', error);
+                        document.getElementById('nickname-feedback').innerHTML = 
+                            '<span class="text-danger">닉네임 확인 중 오류가 발생했습니다.</span>';
+                    }
+                });
+                
+                document.getElementById('register-form').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const form = e.target;
+                    if (!form.checkValidity()) {
+                        e.stopPropagation();
+                        form.classList.add('was-validated');
+                        return;
+                    }
+                    
+                    // 닉네임 유효성 검사
+                    const nickname = document.getElementById('register-nickname');
+                    if (nickname.getAttribute('data-valid') !== 'true') {
+                        document.getElementById('nickname-feedback').innerHTML = 
+                            '<span class="text-danger">닉네임 중복 확인이 필요합니다.</span>';
+                        return;
+                    }
+                    
+                    const name = document.getElementById('register-name').value.trim();
+                    const profileImageUrl = document.getElementById('register-profile-image').value.trim() || CONFIG.DEFAULT_PROFILE_IMAGE;
+                    const tempToken = UTILS.getData('tempToken');
+                    
+                    if (!tempToken) {
+                        UTILS.showToast('유효하지 않은 세션입니다. 다시 로그인해주세요.', 'error');
+                        UI.showPage('login-page');
+                        return;
+                    }
+                    
+                    try {
+                        const data = {
+                            tempToken,
+                            name,
+                            nickname: nickname.value.trim(),
+                            profileImageUrl
+                        };
+                        
+                        const response = await API.auth.register(data);
+                        
+                        // 토큰 저장
+                        UTILS.storeData('accessToken', response.data.accessToken);
+                        UTILS.storeData('refreshToken', response.data.refreshToken);
+                        UTILS.storeData('tokenExpires', Date.now() + (response.data.expiresIn * 1000));
+                        UTILS.storeData('user', response.data.user);
+                        
+                        // 임시 토큰 삭제
+                        UTILS.removeData('tempToken');
+                        
+                        // 인증 UI 업데이트
+                        UI.updateAuthUI();
+                        
+                        UTILS.showToast('회원가입이 완료되었습니다.', 'success');
+                        UI.showPage('home-page');
+                    } catch (error) {
+                        console.error('회원가입 오류:', error);
+                        UTILS.showToast('회원가입 중 오류가 발생했습니다.', 'error');
+                    }
+                });
+                
+                // 트레이너 상세 페이지 이벤트
+                document.getElementById('trainer-detail-apply-btn').addEventListener('click', (e) => {
+                    if (!AUTH.isAuthenticated()) {
+                        UTILS.showToast('로그인이 필요합니다.', 'warning');
+                        return;
+                    }
+                    
+                    const trainerId = e.target.getAttribute('data-trainer-id');
+                    const trainerName = document.getElementById('trainer-detail-name').textContent;
+                    UI.showApplyForm(trainerId, trainerName);
+                });
+                
+                document.getElementById('trainer-detail-login-to-apply-btn').addEventListener('click', () => {
+                    UI.showPage('login-page');
+                });
+                
+                // 신청 양식 이벤트
+                document.getElementById('apply-form').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const form = e.target;
+                    if (!form.checkValidity()) {
+                        e.stopPropagation();
+                        form.classList.add('was-validated');
+                        return;
+                    }
+                    
+                    const trainerId = form.getAttribute('data-trainer-id');
+                    const content = document.getElementById('apply-content').value.trim();
+                    const imageUrl = document.getElementById('apply-image-url').value.trim();
+                    
+                    try {
+                        const data = {
+                            trainerId,
+                            content,
+                            imageUrl: imageUrl || null
+                        };
+                        
+                        await API.apply.createApply(data);
+                        
+                        UTILS.showToast('신청이 완료되었습니다.', 'success');
+                        UI.loadApplications();
+                        UI.showPage('applications-page');
+                    } catch (error) {
+                        console.error('신청 제출 오류:', error);
+                        UTILS.showToast('신청 제출 중 오류가 발생했습니다.', 'error');
+                    }
+                });
+                
+                document.getElementById('apply-cancel').addEventListener('click', () => {
+                    UI.showPage('trainer-detail-page');
+                });
+                
+                // 프로필 페이지 이벤트
+                document.getElementById('profile-edit-btn').addEventListener('click', () => {
+                    document.getElementById('profile-edit-form').classList.remove('hidden');
+                });
+                
+                document.getElementById('profile-edit-cancel').addEventListener('click', () => {
+                    document.getElementById('profile-edit-form').classList.add('hidden');
+                });
+                
+                document.getElementById('profile-edit-form').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const form = e.target;
+                    if (!form.checkValidity()) {
+                        e.stopPropagation();
+                        form.classList.add('was-validated');
+                        return;
+                    }
+                    
+                    const nickname = document.getElementById('profile-edit-nickname').value.trim();
+                    const profileImageUrl = document.getElementById('profile-edit-image').value.trim();
+                    
+                    try {
+                        const data = {
+                            nickname,
+                            profileImageUrl: profileImageUrl || null
+                        };
+                        
+                        const response = await API.auth.updateProfile(data);
+                        
+                        // 사용자 정보 업데이트
+                        const user = UTILS.getData('user');
+                        if (user) {
+                            user.nickname = nickname;
+                            user.profileImageUrl = profileImageUrl || user.profileImageUrl;
+                            UTILS.storeData('user', user);
+                        }
+                        
+                        // 인증 UI 업데이트
+                        UI.updateAuthUI();
+                        
+                        UTILS.showToast('프로필이 업데이트되었습니다.', 'success');
+                        UI.loadProfile();
+                    } catch (error) {
+                        console.error('프로필 업데이트 오류:', error);
+                        UTILS.showToast('프로필 업데이트 중 오류가 발생했습니다.', 'error');
+                    }
+                });
+                
+                document.getElementById('profile-withdraw-btn').addEventListener('click', async () => {
+                    if (confirm('정말로 회원 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                        try {
+                            await API.auth.withdraw();
+                            AUTH.logout();
+                            UTILS.showToast('회원 탈퇴가 완료되었습니다.', 'success');
+                        } catch (error) {
+                            console.error('회원 탈퇴 오류:', error);
+                            UTILS.showToast('회원 탈퇴 중 오류가 발생했습니다.', 'error');
+                        }
+                    }
+                });
+                
+                // 리뷰 모달 이벤트
+                document.getElementById('submit-review').addEventListener('click', async () => {
+                    const applyId = document.getElementById('review-apply-id').value;
+                    const rating = document.querySelector('input[name="review-rating"]:checked').value;
+                    const title = document.getElementById('review-title').value.trim();
+                    const comment = document.getElementById('review-comment').value.trim();
+                    const reviewImageUrl = document.getElementById('review-image').value.trim();
+                    
+                    if (!title || !comment) {
+                        UTILS.showToast('제목과 내용을 모두 입력해주세요.', 'warning');
+                        return;
+                    }
+                    
+                    try {
+                        const data = {
+                            applyId: Number(applyId),
+                            rating: Number(rating),
+                            title,
+                            comment,
+                            reviewImageUrl: reviewImageUrl || null
+                        };
+                        
+                        await API.reviews.createReview(data);
+                        
+                        // 모달 닫기
+                        bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+                        
+                        UTILS.showToast('리뷰가 등록되었습니다.', 'success');
+                        UI.loadApplications();
+                    } catch (error) {
+                        console.error('리뷰 등록 오류:', error);
+                        UTILS.showToast('리뷰 등록 중 오류가 발생했습니다.', 'error');
+                    }
+                });
+                
+                // 트레이너 신청 관리 페이지 필터 버튼 이벤트
+                document.querySelectorAll('#trainer-applications-page .btn-group button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        // 활성화 상태 변경
+                        document.querySelectorAll('#trainer-applications-page .btn-group button').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        e.target.classList.add('active');
+                        
+                        // 선택된 상태로 목록 필터링
+                        const status = e.target.getAttribute('data-status');
+                        UI.loadTrainerApplications(status);
+                    });
+                });
+            },
+            
+            // URL 파라미터 처리
+            handleUrlParams: () => {
+                // URL 파라미터 가져오기
+                const urlParams = new URLSearchParams(window.location.search);
+                
+                // OAuth 콜백 처리
+                if (window.location.pathname.includes('/oauth/callback')) {
+                    const success = AUTH.processCallback(window.location.search);
+                    if (success) {
+                        // 파라미터 제거하고 홈으로 리다이렉션
+                        window.history.replaceState({}, document.title, CONFIG.FRONTEND_URL);
+                    }
+                }
+                
+                // 토큰 파라미터 (회원가입 필요)
+                else if (urlParams.has('token')) {
+                    UTILS.storeData('tempToken', urlParams.get('token'));
+                    UI.showPage('register-page');
+                    // 파라미터 제거
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            },
+            
+            // 앱 초기화
+            init: () => {
+                // URL 파라미터 처리
+                UI.handleUrlParams();
+                
+                // 인증 상태에 따른 UI 업데이트
+                UI.updateAuthUI();
+                
+                // 이벤트 핸들러 설정
+                UI.setupEventHandlers();
+                
+                // 홈페이지 표시
+                UI.showPage('home-page');
+            }
+        };
+        
+        // 앱 실행
+        document.addEventListener('DOMContentLoaded', UI.init);
+    </script>
 </body>
-</html>
+</html>);
+                
+                // 요청한 페이지 표시
+                const page = document.getElementById(pageId);
+                if (page) {
+                    page.classList.remove('hidden');
+                    UI.currentPage = pageId;
+                    
+                    // 네비게이션 활성화 상태 업데이트
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    
+                    // 해당 네비게이션 링크 활성화
+                    switch (pageId) {
+                        case 'home-page':
+                            document.getElementById('nav-home').classList.add('active');
+                            break;
+                        case 'trainers-page':
+                            document.getElementById('nav-trainers').classList.add('active');
+                            break;
+                        case 'applications-page':
+                            document.getElementById('nav-applications').classList.add('active');
+                            break;
+                        case 'trainer-applications-page':
+                            document.getElementById('nav-trainer-applications').classList.add('active');
+                            break;
+                    }
+                }
+            },
+            
+            // 인증 상태에 따른 UI 업데이트
+            updateAuthUI: () => {
+                const isAuthenticated = AUTH.isAuthenticated();
+                const isTrainer = AUTH.isTrainer();
+                
+                // 인증된 사용자만 볼 수 있는 요소
+                document.querySelectorAll('.authenticated').forEach(el => {
+                    el.classList.toggle('hidden', !isAuthenticated);
+                });
+                
+                // 인증되지 않은 사용자만 볼 수 있는 요소
+                document.querySelectorAll('.not-authenticated').forEach(el => {
+                    el.classList.toggle('hidden', isAuthenticated);
+                });
+                
+                // 트레이너만 볼 수 있는 요소
+                document.querySelectorAll('.trainer-only').forEach(el => {
+                    el.classList.toggle('hidden', !isTrainer);
+                });
+                
+                // 사용자 정보 표시
+                if (isAuthenticated) {
+                    const user = UTILS.getData('user');
+                    if (user) {
+                        document.getElementById('username-display').textContent = user.nickname || user.name;
+                        document.getElementById('user-profile-img').src = user.profileImageUrl || CONFIG.DEFAULT_PROFILE_IMAGE;
+                    }
+                }
+            },
+            
+            // 트레이너 목록 로드 및 표시
+            loadTrainers: async () => {
+                try {
+                    // 트레이너 목록을 가져오는 API 호출이 백엔드에 없어서 임시 데이터 사용
+                    const trainers = [
+                        {
+                            trainerId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+                            nickname: '강아지 전문가',
+                            profileImageUrl: 'https://via.placeholder.com/150?text=Dog+Trainer',
+                            introduction: '반려견 행동 교정 전문 트레이너입니다.',
+                            experienceYears: 5,
+                            specializations: ['반려견', '행동교정', '기본훈련'],
+                            averageRating: 4.8,
+                            reviewCount: 24
+                        },
+                        {
+                            trainerId: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+                            nickname: '고양이 전문가',
+                            profileImageUrl: 'https://via.placeholder.com/150?text=Cat+Trainer',
+                            introduction: '고양이 행동 및 사회화 전문 트레이너입니다.',
+                            experienceYears: 3,
+                            specializations: ['고양이', '사회화', '환경적응'],
+                            averageRating: 4.5,
+                            reviewCount: 15
+                        },
+                        {
+                            trainerId: '3fa85f64-5717-4562-b3fc-2c963f66afa8',
+                            nickname: '특수견 훈련사',
+                            profileImageUrl: 'https://via.placeholder.com/150?text=Special+Trainer',
+                            introduction: '특수한 훈련이 필요한 반려견을 위한 트레이너입니다.',
+                            experienceYears: 7,
+                            specializations: ['특수견', '재활훈련', '공격성교정'],
+                            averageRating: 4.9,
+                            reviewCount: 32
+                        }
+                    ];
+                    
+                    const container = document.getElementById('trainers-container');
+                    container.innerHTML = '';
+                    
+                    trainers.forEach(trainer => {
+                        const card = document.createElement('div');
+                        card.className = 'col-md-4';
+                        card.innerHTML = `
+                            <div class="card trainer-card shadow-sm mb-4">
+                                <img src="${trainer.profileImageUrl}" class="card-img-top trainer-img" alt="${trainer.nickname}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${trainer.nickname}</h5>
+                                    <p class="card-text text-truncate">${trainer.introduction}</p>
+                                    <div class="star-rating mb-2">
+                                        ${UTILS.generateStarRating(trainer.averageRating)}
+                                        <span class="ms-1">${trainer.averageRating.toFixed(1)}</span>
+                                        <span class="text-muted">(${trainer.reviewCount})</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            ${trainer.specializations.map(tag => 
+                                                `<span class="badge bg-primary me-1">${tag}</span>`
+                                            ).join('')}
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-primary view-trainer" data-trainer-id="${trainer.trainerId}">
+                                            자세히 보기
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                    
+                    // 트레이너 상세 보기 버튼 이벤트 추가
+                    document.querySelectorAll('.view-trainer').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const trainerId = e.target.getAttribute('data-trainer-id');
+                            UI.loadTrainerDetail(trainerId);
+                        });
+                    });
+                } catch (error) {
+                    console.error('트레이너 로드 오류:', error);
+                    UTILS.showToast('트레이너 정보를 불러오는 중 오류가 발생했습니다.', 'error');
+                }
+            },
+            
+            // 트레이너 상세 정보 로드 및 표시
+            loadTrainerDetail: async (trainerId) => {
+                try {
+                    UTILS.showLoading();
+                    
+                    // 트레이너 상세 정보 가져오기
+                    const response = await API.trainers.getTrainer(trainerId);
+                    const trainer = response.data || response; // API 응답 구조에 따라 조정
+                    
+                    // 트레이너 상세 정보 표시
+                    document.getElementById('trainer-detail-img').src = trainer.profileImageUrl || CONFIG.DEFAULT_PROFILE_IMAGE;
+                    document.getElementById('trainer-detail-name').textContent = trainer.nickname;
+                    document.getElementById('trainer-detail-rating-value').textContent = trainer.averageRating.toFixed(1);
+                    document.getElementById('trainer-detail-review-count').textContent = trainer.reviewCount;
+                    document.getElementById('trainer-detail-experience').textContent = trainer.experienceYears;
+                    document.getElementById('trainer-detail-introduction').textContent = trainer.introduction;
+                    
+                    // 전문 분야 태그 표시
+                    const specializationsContainer = document.getElementById('trainer-detail-specializations');
+                    specializationsContainer.innerHTML = '';
+                    trainer.specializations.forEach(tag => {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-primary me-1 mb-1';
+                        badge.textContent = tag;
+                        specializationsContainer.appendChild(badge);
+                    });
+                    
+                    // 자격증 목록 표시
+                    const certificationsContainer = document.getElementById('trainer-detail-certifications');
+                    certificationsContainer.innerHTML = '';
+                    if (trainer.certifications && trainer.certifications.length > 0) {
+                        trainer.certifications.forEach(cert => {
+                            const item = document.createElement('li');
+                            item.className = 'list-group-item';
+                            item.innerHTML = `
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">${cert.certName}</h6>
+                                        <small class="text-muted">발급: ${cert.issuingBody}</small>
+                                    </div>
+                                    <span class="badge bg-light text-dark">${new Date(cert.issueDate).getFullYear()}년</span>
+                                </div>
+                            `;
+                            certificationsContainer.appendChild(item);
+                        });
+                    } else {
+                        certificationsContainer.innerHTML = '<li class="list-group-item">등록된 자격증이 없습니다.</li>';
+                    }
+                    
+                    // 리뷰 목록 가져오기
+                    try {
+                        const reviewsResponse = await API.reviews.getReviewsByTrainer(trainerId);
+                        const reviews = reviewsResponse.data || reviewsResponse; // API 응답 구조에 따라 조정
+                        
+                        const reviewsContainer = document.getElementById('trainer-detail-reviews');
+                        reviewsContainer.innerHTML = '';
+                        
+                        if (reviews && reviews.length > 0) {
+                            reviews.forEach(review => {
+                                const reviewCard = document.createElement('div');
+                                reviewCard.className = 'card review-card mb-3';
+                                reviewCard.innerHTML = `
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div>
+                                                <h6 class="mb-0">${review.title}</h6>
+                                                <small class="text-muted">${review.userName}</small>
+                                            </div>
+                                            <div class="star-rating">
+                                                ${UTILS.generateStarRating(review.rating)}
+                                                <span class="ms-1">${review.rating}</span>
+                                            </div>
+                                        </div>
+                                        <p class="card-text">${review.comment}</p>
+                                        ${review.reviewImageUrl ? 
+                                            `<img src="${review.reviewImageUrl}" class="img-fluid rounded mb-2" style="max-height: 200px;">` : 
+                                            ''}
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">${UTILS.formatDate(review.createdAt)}</small>
+                                            <div>
+                                                <button class="btn btn-sm ${review.hasLiked ? 'btn-danger' : 'btn-outline-danger'} review-like-btn" 
+                                                    data-review-id="${review.reviewId}" 
+                                                    data-liked="${review.hasLiked}">
+                                                    <i class="fas fa-heart"></i> <span class="like-count">${review.likeCount}</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                                reviewsContainer.appendChild(reviewCard);
+                            });
+                            
+                            // 리뷰 좋아요 버튼 이벤트 추가
+                            document.querySelectorAll('.review-like-btn').forEach(button => {
+                                button.addEventListener('click', async (e) => {
+                                    if (!AUTH.isAuthenticated()) {
+                                        UTILS.showToast('로그인이 필요합니다.', 'warning');
+                                        return;
+                                    }
+                                    
+                                    const reviewId = e.currentTarget.getAttribute('data-review-id');
+                                    const isLiked = e.currentTarget.getAttribute('data-liked') === 'true';
+                                    const likeCountElement = e.currentTarget.querySelector('.like-count');
+                                    
+                                    try {
+                                        if (isLiked) {
+                                            // 좋아요 취소
+                                            await API.reviews.removeLike(reviewId);
+                                            e.currentTarget.classList.remove('btn-danger');
+                                            e.currentTarget.classList.add('btn-outline-danger');
+                                            e.currentTarget.setAttribute('data-liked', 'false');
+                                            likeCountElement.textContent = Number(likeCountElement.textContent) - 1;
+                                        } else {
+                                            // 좋아요 추가
+                                            await API.reviews.addLike(reviewId);
+                                            e.currentTarget.classList.remove('btn-outline-danger');
+                                            e.currentTarget.classList.add('btn-danger');
+                                            e.currentTarget.setAttribute('data-liked', 'true');
+                                            likeCountElement.textContent = Number(likeCountElement.textContent) + 1;
+                                        }
+                                    } catch (error) {
+                                        console.error('리뷰 좋아요 오류:', error);
+                                        UTILS.showToast('좋아요 처리 중 오류가 발생했습니다.', 'error');
+                                    }
+                                });
+                            });
+                        } else {
+                            reviewsContainer.innerHTML = '<div class="alert alert-info">아직 등록된 리뷰가 없습니다.</div>';
+                        }
+                    } catch (error) {
+                        console.error('리뷰 로드 오류:', error);
+                        document.getElementById('trainer-detail-reviews').innerHTML = 
+                            '<div class="alert alert-warning">리뷰를 불러오는 중 오류가 발생했습니다.</div>';
+                    }
+                    
+                    // 신청하기 버튼에 트레이너 ID 설정
+                    const applyBtn = document.getElementById('trainer-detail-apply-btn');
+                    applyBtn.setAttribute('data-trainer-id', trainerId);
+                    
+                    // 페이지 전환
+                    UI.showPage('trainer-detail-page');
+                } catch (error) {
+                    console.error('트레이너 상세 정보 로드 오류:', error);
+                    UTILS.showToast('트레이너 정보를 불러오는 중 오류가 발생했습니다.', 'error');
+                } finally {
+                    UTILS.hideLoading();
+                }
+            },
+            
+            // 신청 양식 초기화 및 표시
+            showApplyForm: (trainerId, trainerName) => {
+                document.getElementById('apply-trainer-name').textContent = `${trainerName}에게 신청하기`;
+                document.getElementById('apply-form').reset();
+                document.getElementById('apply-form').setAttribute('data-trainer-id', trainerId);
+                UI.showPage('apply-form-page');
+            },
+            
+            // 신청 내역 로드 및 표시
+            loadApplications: async () => {
+                try {
+                    UTILS.showLoading();
+                    
+                    // 신청 내역 가져오기
+                    const response = await API.apply.getUserApplies();
+                    const applications = response.data || response; // API 응답 구조에 따라 조정
+                    
+                    const container = document.getElementById('applications-container');
+                    container.innerHTML = '';
+                    
+                    if (applications && applications.length > 0) {
+                        applications.forEach(apply => {
+                            const card = document.createElement('div');
+                            card.className = 'col-md-6 mb-4';
+                            
+                            let statusBadge = '';
+                            let statusActions = '';
+                            
+                            switch (apply.status) {
+                                case 'PENDING':
+                                    statusBadge = '<span class="badge bg-warning text-dark">대기중</span>';
+                                    statusActions = `
+                                        <button class="btn btn-sm btn-outline-danger apply-cancel-btn" data-apply-id="${apply.applyId}">
+                                            신청 취소
+                                        </button>
+                                    `;
+                                    break;
+                                case 'APPROVED':
+                                    statusBadge = '<span class="badge bg-success">승인</span>';
+                                    statusActions = `
+                                        <button class="btn btn-sm btn-primary write-review-btn" data-apply-id="${apply.applyId}" data-trainer-name="${apply.trainerName}">
+                                            리뷰 작성
+                                        </button>
+                                    `;
+                                    break;
+                                case 'REJECTED':
+                                    statusBadge = '<span class="badge bg-danger">거절</span>';
+                                    break;
+                            }
+                            
+                            card.innerHTML = `
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">${apply.trainerName} 트레이너</h5>
+                                        ${statusBadge}
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">${apply.content}</p>
+                                        ${apply.imageUrl ? 
+                                            `<img src="${apply.imageUrl}" class="img-fluid rounded mb-2" style="max-height: 200px;">` : 
+                                            ''}
+                                        <div class="d-flex justify-content-between align-items-center mt-3">
+                                            <small class="text-muted">신청일: ${UTILS.formatDate(apply.createdAt)}</small>
+                                            <div>
+                                                ${statusActions}
+                                                <button class="btn btn-sm btn-outline-primary view-trainer-btn" data-trainer-id="${apply.trainerId}">
+                                                    트레이너 정보
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            container.appendChild(card);
+                        });
+                        
+                        // 트레이너 정보 버튼 이벤트 추가
+                        document.querySelectorAll('.view-trainer-btn').forEach(button => {
+                            button.addEventListener('click', (e) => {
+                                const trainerId = e.target.getAttribute('data-trainer-id');
+                                UI.loadTrainerDetail(trainerId);
+                            });
+                        });
+                        
+                        // 신청 취소 버튼 이벤트 추가
+                        document.querySelectorAll('.apply-cancel-btn').forEach(button => {
+                            button.addEventListener('click', async (e) => {
+                                if (confirm('정말로 신청을 취소하시겠습니까?')) {
+                                    const applyId = e.target.getAttribute('data-apply-id');
+                                    try {
+                                        await API.apply.deleteApply(applyId);
+                                        UTILS.showToast('신청이 취소되었습니다.', 'success');
+                                        UI.loadApplications(); // 목록 새로고침
+                                    } catch (error) {
+                                        console.error('신청 취소 오류:', error);
+                                        UTILS.showToast('신청 취소 중 오류가 발생했습니다.', 'error');
+                                    }
+                                }
+                            });
+                        });
+                        
+                        // 리뷰 작성 버튼 이벤트 추가
+                        document.querySelectorAll('.write-review-btn').forEach(button => {
+                            button.addEventListener('click', (e) => {
+                                const applyId = e.target.getAttribute('data-apply-id');
+                                const trainerName = e.target.getAttribute('data-trainer-name');
+                                
+                                // 리뷰 모달 초기화
+                                document.getElementById('review-apply-id').value = applyId;
+                                document.getElementById('review-form').reset();
+                                
+                                // 리뷰 모달 표시
+                                new bootstrap.Modal(document.getElementById('reviewModal')).show();
+                            });
+                        });
+                    } else {
+                        container.innerHTML = '<div class="col-12"><div class="alert alert-info">신청 내역이 없습니다.</div></div>';
+                    }
+                } catch (error) {
+                    console.error('신청 내역 로드 오류:', error);
+                    UTILS.showToast('신청 내역을 불러오는 중 오류가 발생했습니다.', 'error');
+                } finally {
+                    UTILS.hideLoading();
+                }
+            },
+            
+            // 트레이너용 신청 관리 페이지 로드 및 표시
+            loadTrainerApplications: async (status = null) => {
+                if (!AUTH.isTrainer()) {
+                    UTILS.showToast('트레이너 권한이 필요합니다.', 'warning');
+                    UI.showPage('home-page');
+                    return;
+                }
+                
+                try {
+                    UTILS.showLoading();
+                    
+                    // 신청 내역 가져오기
+                    const response = await API.apply.getTrainerApplies();
+                    let applications = response.data || response; // API 응답 구조에 따라 조정
+                    
+                    // 상태별 필터링
+                    if (status && status !== 'all') {
+                        applications = applications.filter(apply => apply.status === status);
+                    }
+                    
+                    const container = document.getElementById('trainer-applications-container');
+                    container.innerHTML = '';
+                    
+                    if (applications && applications.length > 0) {
+                        applications.forEach(apply => {
+                            const card = document.createElement('div');
+                            card.className = 'col-md-6 mb-4';
+                            
+                            let statusBadge = '';
+                            let statusActions = '';
+                            
+                            switch (apply.status) {
+                                case 'PENDING':
+                                    statusBadge = '<span class="badge bg-warning text-dark">대기중</span>';
+                                    statusActions = `
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-success approve-apply-btn" data-apply-id="${apply.applyId}">
+                                                승인
+                                            </button>
+                                            <button class="btn btn-sm btn-danger reject-apply-btn" data-apply-id="${apply.applyId}">
+                                                거절
+                                            </button>
+                                        </div>
+                                    `;
+                                    break;
+                                case 'APPROVED':
+                                    statusBadge = '<span class="badge bg-success">승인</span>';
+                                    break;
+                                case 'REJECTED':
+                                    statusBadge = '<span class="badge bg-danger">거절</span>';
+                                    break;
+                            }
+                            
+                            card.innerHTML = `
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">${apply.userName}님의 신청</h5>
+                                        ${statusBadge}
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">${apply.content}</p>
+                                        ${apply.imageUrl ? 
+                                            `<img src="${apply.imageUrl}" class="img-fluid rounded mb-2" style="max-height: 200px;">` : 
+                                            ''}
+                                        <div class="d-flex justify-content-between align-items-center mt-3">
+                                            <small class="text-muted">신청일: ${UTILS.formatDate(apply.createdAt)}</small>
+                                            <div>
+                                                ${statusActions}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            container.appendChild(card);
+                        });
+                        
+                        // 승인 버튼 이벤트 추가
+                        document.querySelectorAll('.approve-apply-btn').forEach(button => {
+                            button.addEventListener('click', async (e) => {
+                                if (confirm('이 신청을 승인하시겠습니까?')) {
+                                    const applyId = e.target.getAttribute('data-apply-id');
+                                    try {
+                                        await API.apply.updateApplyStatus(applyId, 'APPROVED');
+                                        UTILS.showToast('신청이 승인되었습니다.', 'success');
+                                        UI.loadTrainerApplications(); // 목록 새로고침
+                                    } catch (error) {
+                                        console.error('신청 승인 오류:', error);
+                                        UTILS.showToast('신청 승인 중 오류가 발생했습니다.', 'error');
+                                    }
+                                }
+                            });
+                        });
+                        
+                        // 거절 버튼 이벤트 추가
+                        document.querySelectorAll('.reject-apply-btn').forEach(button => {
+                            button.addEventListener('click', async (e) => {
+                                if (confirm('이 신청을 거절하시겠습니까?')) {
+                                    const applyId = e.target.getAttribute('data-apply-id');
+                                    try {
+                                        await API.apply.updateApplyStatus(applyId, 'REJECTED');
+                                        UTILS.showToast('신청이 거절되었습니다.', 'success');
+                                        UI.loadTrainerApplications(); // 목록 새로고침
+                                    } catch (error) {
+                                        console.error('신청 거절 오류:', error);
+                                        UTILS.showToast('신청 거절 중 오류가 발생했습니다.', 'error');
+                                    }
+                                }
+                            });
+                        });
+                    } else {
+                        container.innerHTML = '<div class="col-12"><div class="alert alert-info">신청 내역이 없습니다.</div></div>';
+                    }
+                } catch (error) {
+                    console.error('트레이너 신청 내역 로드 오류:', error);
+                    UTILS.showToast('신청 내역을 불러오는 중 오류가 발생했습니다.', 'error');
+                } finally {
+                    UTILS.hideLoading();
+                }
+            },
+            
+            // 프로필 페이지 로드 및 표시
+            loadProfile: async () => {
+                if (!AUTH.isAuthenticated()) {
+                    UTILS.showToast('로그인이 필요합니다.', 'warning');
+                    UI.showPage('login-page');
+                    return;
+                }
+                
+                try {
+                    UTILS.showLoading();
+                    
+                    // 사용자 정보 가져오기
+                    const response = await API.auth.getUserInfo();
+                    const user = response.data || response; // API 응답 구조에 따라 조정
+                    
+                    // 사용자 정보 표시
+                    document.getElementById('profile-img').src = user.profileImageUrl || CONFIG.DEFAULT_PROFILE_IMAGE;
+                    document.getElementById('profile-name').textContent = user.name;
+                    document.getElementById('profile-email').textContent = user.email || '이메일 없음';
+                    
+                    document.getElementById('profile-edit-nickname').value = user.nickname || '';
+                    document.getElementById('profile-edit-image').value = user.profileImageUrl || '';
+                    
+                    // 프로필 수정 폼 숨기기
+                    document.getElementById('profile-edit-form').classList.add('hidden');
+                    
+                    // 내 리뷰 목록 가져오기
+                    try {
+                        const reviewsResponse = await API.reviews.getMyReviews();
+                        const reviews = reviewsResponse.data || reviewsResponse; // API 응답 구조에 따라 조정
+                        
+                        const reviewsContainer = document.getElementById('my-reviews-container');
+                        reviewsContainer.innerHTML = '';
+                        
+                        if (reviews && reviews.length > 0) {
+                            reviews.forEach(review => {
+                                const reviewCard = document.createElement('div');
+                                reviewCard.className = 'card review-card mb-3';
+                                reviewCard.innerHTML = `
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div>
+                                                <h6 class="mb-0">${review.title}</h6>
+                                                <small class="text-muted">${review.trainerName} 트레이너</small>
+                                            </div>
+                                            <div class="star-rating">
+                                                ${UTILS.generateStarRating(review.rating)}
+                                                <span class="ms-1">${review.rating}</span>
+                                            </div>
+                                        </div>
+                                        <p class="card-text">${review.comment}</p>
+                                        ${review.reviewImageUrl ? 
+                                            `<img src="${review.reviewImageUrl}" class="img-fluid rounded mb-2" style="max-height: 200px;">` : 
+                                            ''}
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">${UTILS.formatDate(review.createdAt)}</small>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-danger delete-review-btn" data-review-id="${review.reviewId}">
+                                                    <i class="fas fa-trash-alt"></i> 삭제
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                                reviewsContainer.appendChild(reviewCard);
+                            });
+                            
+                            // 리뷰 삭제 버튼 이벤트 추가
+                            document.querySelectorAll('.delete-review-btn').forEach(button => {
+                                button.addEventListener('click', async (e) => {
+                                    if (confirm('정말로 이 리뷰를 삭제하시겠습니까?')) {
+                                        const reviewId = e.target.getAttribute('data-review-id');
+                                        try {
+                                            await API.reviews.deleteReview(reviewId);
+                                            UTILS.showToast('리뷰가 삭제되었습니다.', 'success');
+                                            UI.loadProfile(); // 프로필 새로고침
+                                        } catch (error) {
+                                            console.error('리뷰 삭제 오류:', error);
+                                            UTILS.showToast('리뷰 삭제 중 오류가 발생했습니다.', 'error');
+                                        }
+                                    }
+                                });
+                            });
+                        } else {
+                            reviewsContainer.innerHTML = '<div class="alert alert-info">작성한 리뷰가 없습니다.</div>';
+                        }
+                    } catch (error) {
+                        console.error('내 리뷰 로드 오류:', error);
+                        document.getElementById('my-reviews-container').innerHTML = 
+                            '<div class="alert alert-warning">리뷰를 불러오는 중 오류가 발생했습니다.</div>';
+                    }
+                    
+                    // 페이지 전환
+                    UI.showPage('profile-page');
+                } catch (error) {
+                    console.error('프로필 로드 오류:', error);
+                    UTILS.showToast('프로필 정보를 불러오는 중 오류가 발생했습니다.', 'error');
+                } finally {
+                    UTILS.hideLoading();
+                }
+            }
+                
+        
+        // API 호출 함수
+        const API = {
+            // 헤더 생성 함수
+            getHeaders: () => {
+                const token = UTILS.getData('accessToken');
+                return {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : null
+                };
+            },
+            
+            // API 호출 기본 함수
+            callAPI: async (endpoint, method = 'GET', data = null) => {
+                try {
+                    UTILS.showLoading();
+                    
+                    const url = `${CONFIG.BACKEND_URL}${endpoint}`;
+                    const headers = API.getHeaders();
+                    
+                    const options = {
+                        method,
+                        headers,
+                        credentials: 'include'
+                    };
+                    
+                    if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+                        options.body = JSON.stringify(data);
+                    }
+                    
+                    const response = await fetch(url, options);
+                    
+                    // 토큰 만료 처리
+                    if (response.status === 401) {
+                        // 리프레시 토큰으로 새 액세스 토큰 요청
+                        const refreshToken = UTILS.getData('refreshToken');
+                        if (refreshToken) {
+                            try {
+                                const newTokens = await API.refreshToken(refreshToken);
+                                if (newTokens) {
+                                    // 토큰 갱신 성공, 원래 요청 재시도
+                                    return API.callAPI(endpoint, method, data);
+                                }
+                            } catch (refreshError) {
+                                // 리프레시 토큰도 만료된 경우 로그아웃
+                                AUTH.logout();
+                                throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.');
+                            }
+                        } else {
+                            // 리프레시 토큰이 없으면 로그아웃
+                            AUTH.logout();
+                            throw new Error('로그인이 필요합니다.');
+                        }
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(result.error?.message || '오류가 발생했습니다.');
+                    }
+                    
+                    return result;
+                } catch (error) {
+                    console.error('API 호출 오류:', error);
+                    throw error;
+                } finally {
+                    UTILS.hideLoading();
+                }
+            },
+            
+            // 토큰 갱신
+            refreshToken: async (refreshToken) => {
+                try {
+                    const response = await fetch(`${CONFIG.BACKEND_URL}/api/v1/auth/refresh`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ refreshToken })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.error?.message || '토큰 갱신 실패');
+                    }
+                    
+                    // 새 토큰 저장
+                    UTILS.storeData('accessToken', result.data.accessToken);
+                    UTILS.storeData('refreshToken', result.data.refreshToken);
+                    UTILS.storeData('tokenExpires', Date.now() + (result.data.expiresIn * 1000));
+                    
+                    return {
+                        accessToken: result.data.accessToken,
+                        refreshToken: result.data.refreshToken
+                    };
+                } catch (error) {
+                    console.error('토큰 갱신 오류:', error);
+                    throw error;
+                }
+            },
+            
+            // 회원 관련 API
+            auth: {
+                // 닉네임 중복 확인
+                checkNickname: async (nickname) => {
+                    return API.callAPI(`/api/v1/auth/check-nickname?nickname=${encodeURIComponent(nickname)}`);
+                },
+                
+                // 회원가입
+                register: async (data) => {
+                    return API.callAPI('/api/v1/auth/register', 'POST', data);
+                },
+                
+                // 사용자 정보 조회
+                getUserInfo: async () => {
+                    return API.callAPI('/api/v1/auth/user-info');
+                },
+                
+                // 프로필 업데이트
+                updateProfile: async (data) => {
+                    return API.callAPI('/api/v1/auth/profile', 'PUT', data);
+                },
+                
+                // 로그아웃
+                logout: async () => {
+                    const refreshToken = UTILS.getData('refreshToken');
+                    return API.callAPI('/api/v1/auth/logout', 'POST', { refreshToken });
+                },
+                
+                // 회원 탈퇴
+                withdraw: async () => {
+                    return API.callAPI('/api/v1/auth/withdraw', 'POST');
+                }
+            },
+            
+            // 트레이너 관련 API
+            trainers: {
+                // 트레이너 상세 조회
+                getTrainer: async (trainerId) => {
+                    return API.callAPI(`/api/v1/trainers/${trainerId}`);
+                }
+            },
+            
+            // 매칭 신청 관련 API
+            apply: {
+                // 신청서 제출
+                createApply: async (data) => {
+                    return API.callAPI('/api/v1/match', 'POST', data);
+                },
+                
+                // 사용자 신청 목록 조회
+                getUserApplies: async () => {
+                    return API.callAPI('/api/v1/match/user');
+                },
+                
+                // 트레이너 신청 목록 조회
+                getTrainerApplies: async () => {
+                    return API.callAPI('/api/v1/match/trainer');
+                },
+                
+                // 신청 상태 업데이트 (트레이너용)
+                updateApplyStatus: async (applyId, status) => {
+                    return API.callAPI(`/api/v1/match/${applyId}/status`, 'PATCH', { status });
+                },
+                
+                // 신청 취소 (사용자용)
+                deleteApply: async (applyId) => {
+                    return API.callAPI(`/api/v1/match/${applyId}/delete`, 'DELETE');
+                }
+            },
+            
+            // 리뷰 관련 API
+            reviews: {
+                // 리뷰 작성
+                createReview: async (data) => {
+                    return API.callAPI('/api/v1/reviews', 'POST', data);
+                },
+                
+                // 모든 리뷰 조회
+                getAllReviews: async () => {
+                    return API.callAPI('/api/v1/reviews');
+                },
+                
+                // 트레이너별 리뷰 조회
+                getReviewsByTrainer: async (trainerId) => {
+                    return API.callAPI(`/api/v1/reviews/trainers/${trainerId}`);
+                },
+                
+                // 내 리뷰 조회
+                getMyReviews: async () => {
+                    return API.callAPI('/api/v1/reviews/users/me');
+                },
+                
+                // 리뷰 삭제
+                deleteReview: async (reviewId) => {
+                    return API.callAPI(`/api/v1/reviews/${reviewId}`, 'DELETE');
+                },
+                
+                // 리뷰 좋아요 추가
+                addLike: async (reviewId) => {
+                    return API.callAPI(`/api/v1/reviews/${reviewId}/likes`, 'POST');
+                },
+                
+                // 리뷰 좋아요 삭제
+                removeLike: async (reviewId) => {
+                    return API.callAPI(`/api/v1/reviews/${reviewId}/likes`, 'DELETE');
+                }
+            }
+        };
+        
+        // 인증 관련 함수
+        const AUTH = {
+            // 소셜 로그인 URL 생성
+            getLoginUrl: (provider) => {
+                return `${CONFIG.BACKEND_URL}/oauth2/authorization/${provider}?redirect_uri=${encodeURIComponent(`${CONFIG.FRONTEND_URL}/oauth/callback`)}`;
+            },
+            
+            // 소셜 로그인 시작
+            startLogin: (provider) => {
+                window.location.href = AUTH.getLoginUrl(provider);
+            },
+            
+            // OAuth 콜백 처리
+            processCallback: (urlParams) => {
+                const params = new URLSearchParams(urlParams);
+                const data = params.get('data');
+                
+                if (data) {
+                    try {
+                        // Base64 디코딩
+                        const decodedData = JSON.parse(atob(data));
+                        
+                        // 토큰 저장
+                        UTILS.storeData('accessToken', decodedData.accessToken);
+                        UTILS.storeData('refreshToken', decodedData.refreshToken);
+                        UTILS.storeData('tokenExpires', Date.now() + (decodedData.expiresIn * 1000));
+                        UTILS.storeData('user', decodedData.user);
+                        
+                        // 홈으로 리디렉션
+                        window.location.href = `${CONFIG.FRONTEND_URL}`;
+                        return true;
+                    } catch (e) {
+                        console.error('OAuth 콜백 처리 오류:', e);
+                        return false;
+                    }
+                } else if (params.get('token')) {
+                    // 회원가입 필요한 경우 (임시 토큰)
+                    UTILS.storeData('tempToken', params.get('token'));
+                    // 회원가입 페이지로 이동
+                    UI.showPage('register-page');
+                    return true;
+                }
+                
+                return false;
+            },
+            
+            // 로그아웃
+            logout: async () => {
+                try {
+                    const refreshToken = UTILS.getData('refreshToken');
+                    if (refreshToken) {
+                        await API.auth.logout();
+                    }
+                } catch (error) {
+                    console.error('로그아웃 오류:', error);
+                } finally {
+                    // 로컬 스토리지 정리
+                    UTILS.removeData('accessToken');
+                    UTILS.removeData('refreshToken');
+                    UTILS.removeData('tokenExpires');
+                    UTILS.removeData('user');
+                    
+                    // 인증 UI 업데이트
+                    UI.updateAuthUI();
+                    UI.showPage('home-page');
+                }
+            },
+            
+            // 인증 상태 확인
+            isAuthenticated: () => {
+                const token = UTILS.getData('accessToken');
+                const expires = UTILS.getData('tokenExpires');
+                
+                if (!token || !expires) {
+                    return false;
+                }
+                
+                return Date.now() < expires;
+            },
+            
+            // 트레이너 역할 확인
+            isTrainer: () => {
+                const user = UTILS.getData('user');
+                return user && user.role === 'ROLE_TRAINER';
+            }
+        };
+
+        // 유틸리티 함수
+        const UTILS = {
+            // 로컬 스토리지에 데이터 저장
+            storeData: (key, data) => {
+                localStorage.setItem(key, JSON.stringify(data));
+            },
+            
+            // 로컬 스토리지에서 데이터 가져오기
+            getData: (key) => {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            },
+            
+            // 로컬 스토리지에서 데이터 삭제
+            removeData: (key) => {
+                localStorage.removeItem(key);
+            },
+            
+            // 날짜 형식 변환 (ISO -> YYYY-MM-DD HH:MM)
+            formatDate: (dateString) => {
+                if (!dateString) return '날짜 정보 없음';
+                const date = new Date(dateString);
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+            },
+            
+            // 토스트 메시지 표시
+            showToast: (message, type = 'info') => {
+                const toastContainer = document.querySelector('.toast-container');
+                const toastId = `toast-${Date.now()}`;
+                
+                const toast = document.createElement('div');
+                toast.className = `toast show`;
+                toast.setAttribute('role', 'alert');
+                toast.setAttribute('aria-live', 'assertive');
+                toast.setAttribute('aria-atomic', 'true');
+                toast.id = toastId;
+                
+                let bgClass = 'bg-primary';
+                let icon = 'info-circle';
+                
+                switch (type) {
+                    case 'success':
+                        bgClass = 'bg-success';
+                        icon = 'check-circle';
+                        break;
+                    case 'error':
+                        bgClass = 'bg-danger';
+                        icon = 'exclamation-circle';
+                        break;
+                    case 'warning':
+                        bgClass = 'bg-warning';
+                        icon = 'exclamation-triangle';
+                        break;
+                }
+                
+                toast.innerHTML = `
+                    <div class="toast-header ${bgClass} text-white">
+                        <i class="fas fa-${icon} me-2"></i>
+                        <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                `;
+                
+                toastContainer.appendChild(toast);
+                
+                // 3초 후 토스트 제거
+                setTimeout(() => {
+                    const toastElement = document.getElementById(toastId);
+                    if (toastElement) {
+                        toastElement.classList.remove('show');
+                        setTimeout(() => {
+                            toastElement.remove();
+                        }, 500);
+                    }
+                }, 3000);
+            },
+            
+            // 별점 표시 HTML 생성
+            generateStarRating: (rating) => {
+                const fullStars = Math.floor(rating);
+                const halfStar = rating % 1 >= 0.5;
+                const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+                
+                let html = '';
+                
+                // 꽉 찬 별
+                for (let i = 0; i < fullStars; i++) {
+                    html += '<i class="fas fa-star"></i> ';
+                }
+                
+                // 반 별
+                if (halfStar) {
+                    html += '<i class="fas fa-star-half-alt"></i> ';
+                }
+                
+                // 빈 별
+                for (let i = 0; i < emptyStars; i++) {
+                    html += '<i class="far fa-star"></i> ';
+                }
+                
+                return html;
+            },
+            
+            // 로딩 스피너 표시/숨기기
+            showLoading: () => {
+                document.getElementById('loading-spinner').classList.remove('hidden');
+            },
+            
+            hideLoading: () => {
+                document.getElementById('loading-spinner').classList.add('hidden');
+            }
+        };
