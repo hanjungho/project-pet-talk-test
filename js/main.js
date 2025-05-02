@@ -1,6 +1,11 @@
 // main.js - 메인 페이지 기능
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 인증 상태에 따라 UI 업데이트 (auth.js에서 구현)
+    if (typeof updateAuthUI === 'function') {
+        updateAuthUI();
+    }
+    
     // 테스티모니얼 슬라이더 구현
     initializeTestimonialSlider();
 });
@@ -139,4 +144,18 @@ function initializeTestimonialSlider() {
     }
 }
 
-// 추가적인 메인 페이지 기능들을 여기에 구현...
+// 임시 로그인 상태 확인 함수 (auth.js 로드 전 동작을 위해)
+function isLoggedIn() {
+    // auth.js의 함수가 있으면 그것을 사용
+    if (typeof window.isLoggedIn === 'function') {
+        return window.isLoggedIn();
+    }
+    
+    // 없으면 로컬 스토리지 확인
+    try {
+        const tokenData = JSON.parse(localStorage.getItem('pettalk_auth_token'));
+        return !!tokenData && Date.now() < tokenData.expiry;
+    } catch (e) {
+        return false;
+    }
+}

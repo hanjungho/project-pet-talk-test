@@ -1,7 +1,7 @@
 // trainers.js - 훈련사 목록 관련 기능
 
-// API 기본 URL
-const API_BASE_URL = 'http://localhost:8443';
+// API 기본 URL (auth.js에서 가져옴)
+// const API_BASE_URL = 'https://api.hanjungho.pet-talk-test.com';
 
 // 전역 변수
 let trainers = []; // 훈련사 목록을 저장할 배열
@@ -52,79 +52,80 @@ async function fetchTrainers() {
             </div>
         `;
         
-        // 실제 API에서는 아래와 같이 모든 훈련사 목록을 가져오는 엔드포인트가 필요
-        // 현재 백엔드에는 이 API가 구현되어 있지 않아 임시 데이터 사용
-        // 실제 구현 시에는 주석 해제
-        /*
-        const response = await fetch(`${API_BASE_URL}/api/v1/trainers`, {
-            method: 'GET'
-        });
-        
-        if (response.ok) {
-            trainers = await response.json();
-            renderTrainers(trainers);
-        } else {
-            throw new Error('훈련사 목록을 불러오는 데 실패했습니다.');
-        }
-        */
-        
-        // 임시 데이터 (실제 구현 시 삭제)
-        setTimeout(() => {
-            trainers = [
-                {
-                    trainerId: '123e4567-e89b-12d3-a456-426614174000',
-                    nickname: '김훈련',
-                    profileImageUrl: '/api/placeholder/300/300',
-                    introduction: '10년 경력의 반려동물 행동 전문가입니다.',
-                    experienceYears: 10,
-                    specializations: ['기본훈련', '분리불안', '공격성'],
-                    averageRating: 4.8,
-                    reviewCount: 32
-                },
-                {
-                    trainerId: '223e4567-e89b-12d3-a456-426614174001',
-                    nickname: '박상담',
-                    profileImageUrl: '/api/placeholder/300/300',
-                    introduction: '특수견 훈련 전문가입니다.',
-                    experienceYears: 5,
-                    specializations: ['기본훈련', '문제행동', '사회화'],
-                    averageRating: 4.5,
-                    reviewCount: 18
-                },
-                {
-                    trainerId: '323e4567-e89b-12d3-a456-426614174002',
-                    nickname: '이멍멍',
-                    profileImageUrl: '/api/placeholder/300/300',
-                    introduction: '강아지 유치원을 운영하고 있습니다.',
-                    experienceYears: 7,
-                    specializations: ['사회화', '배변훈련', '기본훈련'],
-                    averageRating: 4.9,
-                    reviewCount: 27
-                },
-                {
-                    trainerId: '423e4567-e89b-12d3-a456-426614174003',
-                    nickname: '최고양',
-                    profileImageUrl: '/api/placeholder/300/300',
-                    introduction: '고양이 행동 전문가입니다.',
-                    experienceYears: 8,
-                    specializations: ['배변훈련', '스크래치', '사회화'],
-                    averageRating: 4.7,
-                    reviewCount: 20
-                },
-                {
-                    trainerId: '523e4567-e89b-12d3-a456-426614174004',
-                    nickname: '정애견',
-                    profileImageUrl: '/api/placeholder/300/300',
-                    introduction: '노견 케어 전문가입니다.',
-                    experienceYears: 12,
-                    specializations: ['노견케어', '건강관리', '기본훈련'],
-                    averageRating: 5.0,
-                    reviewCount: 45
-                }
-            ];
+        // API 요청 - 모든 훈련사 목록 가져오기
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/trainers`, {
+                method: 'GET'
+            });
             
-            renderTrainers(trainers);
-        }, 1000); // 1초 지연 (로딩 효과 시뮬레이션)
+            if (response.ok) {
+                const data = await response.json();
+                trainers = data;
+                renderTrainers(trainers);
+            } else {
+                throw new Error('훈련사 목록을 불러오는 데 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('API 오류:', error);
+            
+            // API 오류 시 임시 데이터 사용
+            setTimeout(() => {
+                trainers = [
+                    {
+                        trainerId: '123e4567-e89b-12d3-a456-426614174000',
+                        nickname: '김훈련',
+                        profileImageUrl: '/api/placeholder/300/300',
+                        introduction: '10년 경력의 반려동물 행동 전문가입니다.',
+                        experienceYears: 10,
+                        specializations: ['기본훈련', '분리불안', '공격성'],
+                        averageRating: 4.8,
+                        reviewCount: 32
+                    },
+                    {
+                        trainerId: '223e4567-e89b-12d3-a456-426614174001',
+                        nickname: '박상담',
+                        profileImageUrl: '/api/placeholder/300/300',
+                        introduction: '특수견 훈련 전문가입니다.',
+                        experienceYears: 5,
+                        specializations: ['기본훈련', '문제행동', '사회화'],
+                        averageRating: 4.5,
+                        reviewCount: 18
+                    },
+                    {
+                        trainerId: '323e4567-e89b-12d3-a456-426614174002',
+                        nickname: '이멍멍',
+                        profileImageUrl: '/api/placeholder/300/300',
+                        introduction: '강아지 유치원을 운영하고 있습니다.',
+                        experienceYears: 7,
+                        specializations: ['사회화', '배변훈련', '기본훈련'],
+                        averageRating: 4.9,
+                        reviewCount: 27
+                    },
+                    {
+                        trainerId: '423e4567-e89b-12d3-a456-426614174003',
+                        nickname: '최고양',
+                        profileImageUrl: '/api/placeholder/300/300',
+                        introduction: '고양이 행동 전문가입니다.',
+                        experienceYears: 8,
+                        specializations: ['배변훈련', '스크래치', '사회화'],
+                        averageRating: 4.7,
+                        reviewCount: 20
+                    },
+                    {
+                        trainerId: '523e4567-e89b-12d3-a456-426614174004',
+                        nickname: '정애견',
+                        profileImageUrl: '/api/placeholder/300/300',
+                        introduction: '노견 케어 전문가입니다.',
+                        experienceYears: 12,
+                        specializations: ['노견케어', '건강관리', '기본훈련'],
+                        averageRating: 5.0,
+                        reviewCount: 45
+                    }
+                ];
+                
+                renderTrainers(trainers);
+            }, 1000); // 1초 지연 (로딩 효과 시뮬레이션)
+        }
     } catch (error) {
         console.error('훈련사 목록 로드 중 오류 발생:', error);
         

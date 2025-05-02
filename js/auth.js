@@ -1,80 +1,176 @@
-// profile.js - 프로필 페이지 기능
+// auth.js - 인증 관련 핵심 기능
 
 // API 기본 URL
-const API_BASE_URL = 'http://localhost:8443';
+const API_BASE_URL = 'https://api.hanjungho.pet-talk-test.com';
 
+// 로컬 스토리지 키
+const TOKEN_KEY = 'pettalk_auth_token';
+const USER_INFO_KEY = 'pettalk_user_info';
+
+// 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', () => {
-    // 인증 상태 확인
-    if (!isLoggedIn()) {
-        // 비로그인 상태면 로그인 페이지로 리다이렉트
-        window.location.href = '/login.html';
-        return;
-    }
-
-    // 탭 전환 기능 초기화
-    initializeTabs();
+    // 인증 상태에 따라 UI 업데이트
+    updateAuthUI();
     
-    // 프로필 수정 폼 이벤트 리스너 등록
-    const profileEditForm = document.getElementById('profile-edit-form');
-    if (profileEditForm) {
-        profileEditForm.addEventListener('submit', handleProfileUpdate);
-    }
+    // 로그인 버튼 이벤트 리스너
+    const kakaoLoginBtn = document.getElementById('kakao-login-btn');
+    const naverLoginBtn = document.getElementById('naver-login-btn');
     
-    // 프로필 이미지 업로드 이벤트 리스너
-    const editProfileImageUpload = document.getElementById('edit-profile-image-upload');
-    if (editProfileImageUpload) {
-        editProfileImageUpload.addEventListener('change', handleProfileImageUpload);
-    }
-    
-    const editProfileImage = document.getElementById('edit-profile-image');
-    if (editProfileImage) {
-        editProfileImage.addEventListener('click', () => {
-            document.getElementById('edit-profile-image-upload').click();
+    if (kakaoLoginBtn) {
+        kakaoLoginBtn.addEventListener('click', () => {
+            redirectToOAuth('kakao');
         });
     }
     
-    // 내 신청 내역 가져오기
-    fetchMyApplications();
+    if (naverLoginBtn) {
+        naverLoginBtn.addEventListener('click', () => {
+            redirectToOAuth('naver');
+        });
+    }
     
-    // 내 후기 목록 가져오기
-    fetchMyReviews();
+    // 회원가입 버튼 이벤트 리스너
+    const kakaoRegisterBtn = document.getElementById('kakao-register-btn');
+    const naverRegisterBtn = document.getElementById('naver-register-btn');
+    
+    if (kakaoRegisterBtn) {
+        kakaoRegisterBtn.addEventListener('click', () => {
+            redirectToOAuth('kakao');
+        });
+    }
+    
+    if (naverRegisterBtn) {
+        naverRegisterBtn.addEventListener('click', () => {
+            redirectToOAuth('naver');
+        });
+    }
+    
+    // 로그아웃 버튼 이벤트 리스너
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+    
+    // 회원 탈퇴 버튼 이벤트 리스너
+    const withdrawBtn = document.getElementById('withdraw-btn');
+    if (withdrawBtn) {
+        withdrawBtn.addEventListener('click', () => {
+            if (confirm('정말 회원 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                withdrawAccount();
+            }
+        });
+    }
+    
+    // OAuth 콜백 처리
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthData = urlParams.get('data');
+    const tempToken = urlParams.get('token');
+    
+    if (oauthData) {
+        handleOAuthCallback(oauthData);
+    } else if (tempToken) {
+        handleRegistrationToken(tempToken);
+    }
+    
+    // 닉네임 중복 확인 이벤트 (등록 페이지)
+    const nicknameInput = document.getElementById('nickname');
+    if (nicknameInput) {
+        nicknameInput.addEventListener('blur', checkNickname);
+    }
+    
+    // 회원가입 폼 제출 이벤트
+    const userInfoForm = document.getElementById('user-info-form');
+    if (userInfoForm) {
+        userInfoForm.addEventListener('submit', handleRegistration);
+    }
+    
+    // 프로필 이미지 업로드 이벤트
+    const profileImage = document.getElementById('profile-image');
+    if (profileImage) {
+        profileImage.addEventListener('change', handleProfileImagePreview);
+    }
 });
 
-// 탭 전환 기능 초기화
-function initializeTabs() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const tabId = button.getAttribute('data-tab');
-            
-            // 모든 탭 컨텐츠 숨김
-            tabContents.forEach(content => {
-                content.style.display = 'none';
-            });
-            
-            // 모든 탭 버튼 비활성화
-            tabButtons.forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // 선택한 탭 컨텐츠 표시
-            document.getElementById(tabId).style.display = 'block';
-            
-            // 선택한 탭 버튼 활성화
-            button.classList.add('active');
-        });
-    });
+// OAuth 로그인 리다이렉트
+function redirectToOAuth(provider) {
+    const redirectUri = `${API_BASE_URL}/oauth2/authorization/${provider}`;
+    window.location.href = redirectUri;
 }
 
-// 프로필 이미지 업로드 처리
-function handleProfileImageUpload(event) {
-    const file = event.target.files[0];
-    const profileImagePreview = document.getElementById('user-profile-image');
-    const profileImageUrl = document.getElementById('edit-profile-image-url');
+// OAuth 콜백 처리
+function handleOAuthCallback(data) {
+    try {
+        // Base64 디코딩
+        const jsonString = atob(data);
+        const authData = JSON.parse(jsonString);
+        
+        if (authData.accessToken) {
+            // 토큰 저장
+            saveAuthToken(authData.accessToken, authData.refreshToken, authData.expiresIn);
+            
+            // 사용자 정보 저장
+            if (authData.user) {
+                localStorage.setItem(USER_INFO_KEY, JSON.stringify(authData.user));
+            }
+            
+            // 홈페이지로 리다이렉트
+            window.location.href = '/';
+        }
+    } catch (error) {
+        console.error('OAuth 콜백 처리 중 오류 발생:', error);
+        alert('로그인 처리 중 오류가 발생했습니다.');
+        window.location.href = '/login.html';
+    }
+}
+
+// 임시 토큰으로 회원가입 페이지 처리
+function handleRegistrationToken(token) {
+    document.getElementById('register-form-container').style.display = 'none';
+    document.getElementById('additional-info-form').style.display = 'block';
+    document.getElementById('temp-token').value = token;
+}
+
+// 닉네임 중복 확인
+async function checkNickname() {
+    const nickname = document.getElementById('nickname').value;
+    const nicknameStatus = document.getElementById('nickname-status');
     
-    if (!file || !profileImagePreview) return;
+    if (!nickname || nickname.trim() === '') {
+        nicknameStatus.textContent = '닉네임을 입력해주세요.';
+        nicknameStatus.className = 'error';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/check-nickname?nickname=${encodeURIComponent(nickname)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success && data.data.available) {
+            nicknameStatus.textContent = '사용 가능한 닉네임입니다.';
+            nicknameStatus.className = 'success';
+        } else {
+            nicknameStatus.textContent = '이미 사용 중인 닉네임입니다.';
+            nicknameStatus.className = 'error';
+        }
+    } catch (error) {
+        console.error('닉네임 확인 중 오류 발생:', error);
+        nicknameStatus.textContent = '서버 연결 오류가 발생했습니다.';
+        nicknameStatus.className = 'error';
+    }
+}
+
+// 프로필 이미지 미리보기
+function handleProfileImagePreview(event) {
+    const file = event.target.files[0];
+    const profilePreview = document.getElementById('profile-preview');
+    const profileImageUrl = document.getElementById('profile-image-url');
+    
+    if (!file || !profilePreview) return;
     
     // 파일 유형 검증
     if (!file.type.startsWith('image/')) {
@@ -91,10 +187,9 @@ function handleProfileImageUpload(event) {
     // 이미지 미리보기 설정
     const reader = new FileReader();
     reader.onload = function(e) {
-        profileImagePreview.src = e.target.result;
+        profilePreview.src = e.target.result;
         
-        // 실제 서비스에서는 여기서 이미지를 서버에 업로드하고 URL을 받아와야 함
-        // 지금은 임시로 Base64 문자열을 사용
+        // 임시 이미지 URL 저장 (실제 서비스에서는 서버에 업로드 필요)
         if (profileImageUrl) {
             profileImageUrl.value = e.target.result;
         }
@@ -102,32 +197,29 @@ function handleProfileImageUpload(event) {
     reader.readAsDataURL(file);
 }
 
-// 프로필 정보 업데이트 처리
-async function handleProfileUpdate(event) {
+// 회원가입 폼 제출 처리
+async function handleRegistration(event) {
     event.preventDefault();
     
-    const nickname = document.getElementById('edit-nickname').value;
-    const profileImageUrl = document.getElementById('edit-profile-image-url').value;
+    const tempToken = document.getElementById('temp-token').value;
+    const name = document.getElementById('name').value;
+    const nickname = document.getElementById('nickname').value;
+    const profileImageUrl = document.getElementById('profile-image-url').value;
     
-    if (!nickname) {
-        alert('닉네임을 입력해주세요.');
-        return;
-    }
-    
-    const accessToken = getAccessToken();
-    if (!accessToken) {
-        alert('로그인 상태가 아닙니다.');
+    if (!name || !nickname) {
+        alert('이름과 닉네임을 입력해주세요.');
         return;
     }
     
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
-            method: 'PUT',
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
+                tempToken,
+                name,
                 nickname,
                 profileImageUrl
             })
@@ -136,279 +228,259 @@ async function handleProfileUpdate(event) {
         const data = await response.json();
         
         if (response.ok && data.success) {
-            alert('프로필이 성공적으로 업데이트되었습니다.');
+            // 토큰 저장
+            saveAuthToken(data.data.accessToken, data.data.refreshToken, data.data.expiresIn);
             
-            // 로컬 스토리지의 사용자 정보 업데이트
-            localStorage.setItem('pettalk_user_info', JSON.stringify(data.data));
+            // 사용자 정보 저장
+            if (data.data.user) {
+                localStorage.setItem(USER_INFO_KEY, JSON.stringify(data.data.user));
+            }
             
-            // 페이지 새로고침
-            window.location.reload();
+            alert('회원가입이 완료되었습니다.');
+            window.location.href = '/';
         } else {
-            alert(data.error ? data.error.message : '프로필 업데이트 중 오류가 발생했습니다.');
+            alert(data.error ? data.error.message : '회원가입 중 오류가 발생했습니다.');
         }
     } catch (error) {
-        console.error('프로필 업데이트 중 오류 발생:', error);
+        console.error('회원가입 중 오류 발생:', error);
         alert('서버 연결 오류가 발생했습니다.');
     }
 }
 
-// 내 신청 내역 가져오기
-async function fetchMyApplications() {
-    const applicationsContainer = document.getElementById('applications-list');
-    if (!applicationsContainer) return;
+// 로그아웃 처리
+async function handleLogout() {
+    try {
+        const refreshToken = getRefreshToken();
+        
+        if (refreshToken) {
+            await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getAccessToken()}`
+                },
+                body: JSON.stringify({ refreshToken })
+            });
+        }
+    } catch (error) {
+        console.error('로그아웃 요청 중 오류 발생:', error);
+    } finally {
+        // 로컬 스토리지 토큰 삭제
+        clearAuthData();
+        
+        // 홈페이지로 리다이렉트
+        window.location.href = '/';
+    }
+}
+
+// 회원 탈퇴 처리
+async function withdrawAccount() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/withdraw`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAccessToken()}`
+            }
+        });
+        
+        if (response.ok) {
+            alert('회원 탈퇴가 완료되었습니다.');
+            clearAuthData();
+            window.location.href = '/';
+        } else {
+            const data = await response.json();
+            alert(data.error ? data.error.message : '회원 탈퇴 중 오류가 발생했습니다.');
+        }
+    } catch (error) {
+        console.error('회원 탈퇴 중 오류 발생:', error);
+        alert('서버 연결 오류가 발생했습니다.');
+    }
+}
+
+// 토큰 저장
+function saveAuthToken(accessToken, refreshToken, expiresIn) {
+    const expiry = Date.now() + (expiresIn * 1000);
     
-    const accessToken = getAccessToken();
-    if (!accessToken) return;
+    const tokenData = {
+        accessToken,
+        refreshToken,
+        expiry
+    };
+    
+    localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenData));
+}
+
+// 액세스 토큰 가져오기
+function getAccessToken() {
+    try {
+        const tokenData = JSON.parse(localStorage.getItem(TOKEN_KEY));
+        
+        if (!tokenData) {
+            return null;
+        }
+        
+        // 토큰 만료 확인
+        if (Date.now() > tokenData.expiry) {
+            // 토큰 갱신 시도
+            refreshAuthToken();
+            return null;
+        }
+        
+        return tokenData.accessToken;
+    } catch (error) {
+        console.error('토큰 파싱 중 오류 발생:', error);
+        return null;
+    }
+}
+
+// 리프레시 토큰 가져오기
+function getRefreshToken() {
+    try {
+        const tokenData = JSON.parse(localStorage.getItem(TOKEN_KEY));
+        return tokenData ? tokenData.refreshToken : null;
+    } catch (error) {
+        console.error('리프레시 토큰 파싱 중 오류 발생:', error);
+        return null;
+    }
+}
+
+// 토큰 갱신
+async function refreshAuthToken() {
+    const refreshToken = getRefreshToken();
+    
+    if (!refreshToken) {
+        clearAuthData();
+        return null;
+    }
     
     try {
-        applicationsContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>신청 내역을 불러오는 중...</p></div>';
-        
-        const response = await fetch(`${API_BASE_URL}/api/v1/match/user`, {
-            method: 'GET',
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+            method: 'POST',
             headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ refreshToken })
         });
         
         if (response.ok) {
             const data = await response.json();
             
-            if (Array.isArray(data) && data.length > 0) {
-                // 신청 내역 렌더링
-                applicationsContainer.innerHTML = '';
-                
-                data.forEach(application => {
-                    applicationsContainer.appendChild(createApplicationItem(application));
+            if (data.success) {
+                saveAuthToken(data.data.accessToken, data.data.refreshToken, data.data.expiresIn);
+                return data.data.accessToken;
+            }
+        }
+        
+        // 갱신 실패 시 로그아웃
+        clearAuthData();
+        return null;
+    } catch (error) {
+        console.error('토큰 갱신 중 오류 발생:', error);
+        clearAuthData();
+        return null;
+    }
+}
+
+// 인증 데이터 초기화
+function clearAuthData() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_INFO_KEY);
+}
+
+// 로그인 상태 확인
+function isLoggedIn() {
+    return getAccessToken() !== null;
+}
+
+// 인증 상태에 따른 UI 업데이트
+function updateAuthUI() {
+    const loginMenu = document.getElementById('login-menu');
+    const profileMenu = document.getElementById('profile-menu');
+    
+    if (isLoggedIn()) {
+        // 로그인 상태
+        if (loginMenu) loginMenu.style.display = 'none';
+        if (profileMenu) profileMenu.style.display = 'block';
+        
+        // 사용자 정보 표시
+        updateUserProfileInfo();
+    } else {
+        // 비로그인 상태
+        if (loginMenu) loginMenu.style.display = 'block';
+        if (profileMenu) profileMenu.style.display = 'none';
+    }
+}
+
+// 사용자 프로필 정보 업데이트
+function updateUserProfileInfo() {
+    try {
+        const userInfo = JSON.parse(localStorage.getItem(USER_INFO_KEY));
+        
+        if (userInfo) {
+            const userNickname = document.getElementById('user-nickname');
+            const userEmail = document.getElementById('user-email');
+            const userProfileImage = document.getElementById('user-profile-image');
+            const editNickname = document.getElementById('edit-nickname');
+            
+            if (userNickname) userNickname.textContent = userInfo.nickname || '사용자';
+            if (userEmail) userEmail.textContent = userInfo.email || '';
+            if (userProfileImage) userProfileImage.src = userInfo.profileImageUrl || '/api/placeholder/150/150';
+            if (editNickname) editNickname.value = userInfo.nickname || '';
+        }
+    } catch (error) {
+        console.error('사용자 정보 업데이트 중 오류 발생:', error);
+    }
+}
+
+// API 요청 헬퍼 함수 (인증 토큰 포함)
+async function fetchWithAuth(url, options = {}) {
+    // 액세스 토큰 가져오기
+    let accessToken = getAccessToken();
+    
+    // 토큰이 없으면 갱신 시도
+    if (!accessToken) {
+        accessToken = await refreshAuthToken();
+        
+        // 갱신 실패 시 로그인 페이지로 리다이렉트
+        if (!accessToken) {
+            window.location.href = '/login.html';
+            return null;
+        }
+    }
+    
+    // 헤더 설정
+    const headers = {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}${url}`, {
+            ...options,
+            headers
+        });
+        
+        // 인증 오류 시 토큰 갱신 후 재시도
+        if (response.status === 401) {
+            accessToken = await refreshAuthToken();
+            
+            if (accessToken) {
+                headers.Authorization = `Bearer ${accessToken}`;
+                return fetch(`${API_BASE_URL}${url}`, {
+                    ...options,
+                    headers
                 });
             } else {
-                applicationsContainer.innerHTML = '<div class="empty-list-message">신청 내역이 없습니다.</div>';
+                window.location.href = '/login.html';
+                return null;
             }
-        } else {
-            applicationsContainer.innerHTML = '<div class="error-message">신청 내역을 불러오는 데 실패했습니다.</div>';
         }
-    } catch (error) {
-        console.error('신청 내역 불러오기 중 오류 발생:', error);
-        applicationsContainer.innerHTML = '<div class="error-message">서버 연결 오류가 발생했습니다.</div>';
-    }
-}
-
-// 신청 내역 항목 생성 함수
-function createApplicationItem(application) {
-    const item = document.createElement('div');
-    item.className = 'list-item';
-    
-    // 상태에 따른 클래스 설정
-    const statusClass = {
-        'PENDING': 'status-pending',
-        'APPROVED': 'status-approved',
-        'REJECTED': 'status-rejected'
-    }[application.status] || '';
-    
-    // 상태에 따른 텍스트 설정
-    const statusText = {
-        'PENDING': '신청중',
-        'APPROVED': '승인됨',
-        'REJECTED': '거절됨'
-    }[application.status] || application.status;
-    
-    // 날짜 포맷 변환
-    const createdDate = new Date(application.createdAt).toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-    
-    item.innerHTML = `
-        <div class="list-item-header">
-            <div class="list-item-title">${application.trainerName} 훈련사 상담 신청</div>
-            <span class="list-item-status ${statusClass}">${statusText}</span>
-        </div>
-        <div class="list-item-content">
-            <p>${application.content}</p>
-            ${application.imageUrl ? `<img src="${application.imageUrl}" alt="첨부 이미지" class="attached-image">` : ''}
-            <div class="list-item-date">신청일: ${createdDate}</div>
-        </div>
-        <div class="list-item-actions">
-            <a href="/trainer-detail.html?id=${application.trainerId}" class="btn secondary btn-sm">훈련사 정보</a>
-            ${application.status === 'PENDING' 
-              ? `<button class="btn danger btn-sm delete-application" data-id="${application.applyId}">신청 취소</button>` 
-              : ''}
-            ${application.status === 'APPROVED' && !application.hasReview 
-              ? `<a href="/review.html?applyId=${application.applyId}" class="btn primary btn-sm">후기 작성</a>` 
-              : ''}
-        </div>
-    `;
-    
-    // 신청 취소 버튼 이벤트 리스너
-    const deleteBtn = item.querySelector('.delete-application');
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', () => {
-            if (confirm('정말 신청을 취소하시겠습니까?')) {
-                deleteApplication(application.applyId);
-            }
-        });
-    }
-    
-    return item;
-}
-
-// 신청 취소 함수
-async function deleteApplication(applyId) {
-    const accessToken = getAccessToken();
-    if (!accessToken) return;
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/match/${applyId}/delete`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
-        });
         
-        if (response.ok) {
-            alert('신청이 취소되었습니다.');
-            fetchMyApplications(); // 목록 새로고침
-        } else {
-            const data = await response.json();
-            alert(data.error ? data.error.message : '신청 취소 중 오류가 발생했습니다.');
-        }
+        return response;
     } catch (error) {
-        console.error('신청 취소 중 오류 발생:', error);
-        alert('서버 연결 오류가 발생했습니다.');
-    }
-}
-
-// 내 후기 목록 가져오기
-async function fetchMyReviews() {
-    const reviewsContainer = document.getElementById('reviews-list');
-    if (!reviewsContainer) return;
-    
-    const accessToken = getAccessToken();
-    if (!accessToken) return;
-    
-    try {
-        reviewsContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>후기 목록을 불러오는 중...</p></div>';
-        
-        const response = await fetch(`${API_BASE_URL}/api/v1/reviews/users/me`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            
-            if (Array.isArray(data) && data.length > 0) {
-                // 후기 목록 렌더링
-                reviewsContainer.innerHTML = '';
-                
-                data.forEach(review => {
-                    reviewsContainer.appendChild(createReviewItem(review));
-                });
-            } else {
-                reviewsContainer.innerHTML = '<div class="empty-list-message">작성한 후기가 없습니다.</div>';
-            }
-        } else {
-            reviewsContainer.innerHTML = '<div class="error-message">후기 목록을 불러오는 데 실패했습니다.</div>';
-        }
-    } catch (error) {
-        console.error('후기 목록 불러오기 중 오류 발생:', error);
-        reviewsContainer.innerHTML = '<div class="error-message">서버 연결 오류가 발생했습니다.</div>';
-    }
-}
-
-// 후기 항목 생성 함수
-function createReviewItem(review) {
-    const item = document.createElement('div');
-    item.className = 'list-item';
-    
-    // 날짜 포맷 변환
-    const createdDate = new Date(review.createdAt).toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-    
-    // 별점 HTML 생성
-    const starsHtml = generateStarsHtml(review.rating);
-    
-    item.innerHTML = `
-        <div class="list-item-header">
-            <div class="list-item-title">${review.trainerName} 훈련사 후기</div>
-            <div class="review-rating">${starsHtml}</div>
-        </div>
-        <div class="list-item-content">
-            <h3>${review.title}</h3>
-            <p>${review.comment}</p>
-            ${review.reviewImageUrl ? `<img src="${review.reviewImageUrl}" alt="후기 이미지" class="review-image">` : ''}
-            <div class="list-item-date">작성일: ${createdDate}</div>
-        </div>
-        <div class="list-item-actions">
-            <a href="/trainer-detail.html?id=${review.trainerId}" class="btn secondary btn-sm">훈련사 정보</a>
-            <button class="btn primary btn-sm edit-review" data-id="${review.reviewId}">수정</button>
-            <button class="btn danger btn-sm delete-review" data-id="${review.reviewId}">삭제</button>
-        </div>
-    `;
-    
-    // 후기 수정 버튼 이벤트 리스너
-    const editBtn = item.querySelector('.edit-review');
-    if (editBtn) {
-        editBtn.addEventListener('click', () => {
-            window.location.href = `/review-edit.html?id=${review.reviewId}`;
-        });
-    }
-    
-    // 후기 삭제 버튼 이벤트 리스너
-    const deleteBtn = item.querySelector('.delete-review');
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', () => {
-            if (confirm('정말 후기를 삭제하시겠습니까?')) {
-                deleteReview(review.reviewId);
-            }
-        });
-    }
-    
-    return item;
-}
-
-// 별점 HTML 생성 함수
-function generateStarsHtml(rating) {
-    let html = '';
-    
-    for (let i = 1; i <= 5; i++) {
-        if (i <= rating) {
-            html += '<i class="fas fa-star"></i>';
-        } else {
-            html += '<i class="far fa-star"></i>';
-        }
-    }
-    
-    return html + ` <span>(${rating}점)</span>`;
-}
-
-// 후기 삭제 함수
-async function deleteReview(reviewId) {
-    const accessToken = getAccessToken();
-    if (!accessToken) return;
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/reviews/${reviewId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
-        });
-        
-        if (response.ok) {
-            alert('후기가 삭제되었습니다.');
-            fetchMyReviews(); // 후기 목록 새로고침
-        } else {
-            const data = await response.json();
-            alert(data.error ? data.error.message : '후기 삭제 중 오류가 발생했습니다.');
-        }
-    } catch (error) {
-        console.error('후기 삭제 중 오류 발생:', error);
-        alert('서버 연결 오류가 발생했습니다.');
+        console.error('API 요청 중 오류 발생:', error);
+        throw error;
     }
 }

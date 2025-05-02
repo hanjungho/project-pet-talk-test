@@ -1,7 +1,7 @@
 // profile.js - 프로필 페이지 기능
 
-// API 기본 URL
-const API_BASE_URL = 'http://localhost:8443';
+// API 기본 URL (auth.js에서 가져옴)
+// const API_BASE_URL = 'https://api.hanjungho.pet-talk-test.com';
 
 document.addEventListener('DOMContentLoaded', () => {
     // 인증 상태 확인
@@ -114,19 +114,9 @@ async function handleProfileUpdate(event) {
         return;
     }
     
-    const accessToken = getAccessToken();
-    if (!accessToken) {
-        alert('로그인 상태가 아닙니다.');
-        return;
-    }
-    
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
+        const response = await fetchWithAuth('/api/v1/auth/profile', {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
-            },
             body: JSON.stringify({
                 nickname,
                 profileImageUrl
@@ -157,17 +147,11 @@ async function fetchMyApplications() {
     const applicationsContainer = document.getElementById('applications-list');
     if (!applicationsContainer) return;
     
-    const accessToken = getAccessToken();
-    if (!accessToken) return;
-    
     try {
         applicationsContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>신청 내역을 불러오는 중...</p></div>';
         
-        const response = await fetch(`${API_BASE_URL}/api/v1/match/user`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
+        const response = await fetchWithAuth('/api/v1/match/user', {
+            method: 'GET'
         });
         
         if (response.ok) {
@@ -254,15 +238,9 @@ function createApplicationItem(application) {
 
 // 신청 취소 함수
 async function deleteApplication(applyId) {
-    const accessToken = getAccessToken();
-    if (!accessToken) return;
-    
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/match/${applyId}/delete`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
+        const response = await fetchWithAuth(`/api/v1/match/${applyId}/delete`, {
+            method: 'DELETE'
         });
         
         if (response.ok) {
@@ -283,17 +261,11 @@ async function fetchMyReviews() {
     const reviewsContainer = document.getElementById('reviews-list');
     if (!reviewsContainer) return;
     
-    const accessToken = getAccessToken();
-    if (!accessToken) return;
-    
     try {
         reviewsContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>후기 목록을 불러오는 중...</p></div>';
         
-        const response = await fetch(`${API_BASE_URL}/api/v1/reviews/users/me`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
+        const response = await fetchWithAuth('/api/v1/reviews/users/me', {
+            method: 'GET'
         });
         
         if (response.ok) {
@@ -389,15 +361,9 @@ function generateStarsHtml(rating) {
 
 // 후기 삭제 함수
 async function deleteReview(reviewId) {
-    const accessToken = getAccessToken();
-    if (!accessToken) return;
-    
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/reviews/${reviewId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
+        const response = await fetchWithAuth(`/api/v1/reviews/${reviewId}`, {
+            method: 'DELETE'
         });
         
         if (response.ok) {
