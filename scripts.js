@@ -1,94 +1,75 @@
-// API 설정
-const API_BASE_URL = 'http://localhost:8443';
-const FRONTEND_URL = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/');
-
-// OAuth 리다이렉트 URL
-const OAUTH_URLS = {
-    KAKAO: `${API_BASE_URL}/oauth2/authorization/kakao`,
-    NAVER: `${API_BASE_URL}/oauth2/authorization/naver`
+// 기본 설정
+const API_BASE_URL = 'http://localhost:8443'; // 실제 배포 시 변경 필요
+const LOCAL_STORAGE_KEYS = {
+    ACCESS_TOKEN: 'accessToken',
+    REFRESH_TOKEN: 'refreshToken',
+    TEMP_TOKEN: 'tempToken'
 };
 
-// 앱 상태
-const appState = {
-    user: null,
-    accessToken: null,
-    refreshToken: null,
-    tempToken: null,
-    isLoading: false
-};
-
-// DOM 요소 참조
+// DOM 요소 접근
 const elements = {
-    // 인증 관련 요소
+    // 인증 관련
     loginBtn: document.getElementById('login-btn'),
     userProfile: document.getElementById('user-profile'),
-    profileImg: document.getElementById('profile-img'),
     userName: document.getElementById('user-name'),
-    profileBtn: document.getElementById('profile-btn'),
+    profileImg: document.getElementById('profile-img'),
+    myProfile: document.getElementById('my-profile'),
     logoutBtn: document.getElementById('logout-btn'),
     
-    // 모달 관련 요소
+    // 모달
     authModal: document.getElementById('auth-modal'),
-    notificationModal: document.getElementById('notification-modal'),
-    notificationMessage: document.querySelector('.notification-message'),
-    modalCloseButtons: document.querySelectorAll('.close'),
+    editProfileModal: document.getElementById('edit-profile-modal'),
+    modalCloses: document.querySelectorAll('.close'),
     
-    // 탭 관련 요소
+    // 탭
     tabBtns: document.querySelectorAll('.tab-btn'),
     loginTab: document.getElementById('login-tab'),
     registerTab: document.getElementById('register-tab'),
     
-    // 회원가입 관련 요소
+    // 소셜 로그인
+    kakaoLogin: document.getElementById('kakao-login'),
+    naverLogin: document.getElementById('naver-login'),
+    
+    // 회원가입
     registerForm: document.getElementById('register-form'),
     nicknameInput: document.getElementById('nickname'),
     nicknameStatus: document.getElementById('nickname-status'),
     avatarOptions: document.querySelectorAll('.avatar-option'),
     profileImageUrl: document.getElementById('profile-image-url'),
     
-    // 페이지 관련 요소
-    navLinks: document.querySelectorAll('#nav-menu a'),
+    // 프로필
+    profilePage: document.getElementById('profile-page'),
+    profilePageImg: document.getElementById('profile-page-img'),
+    profilePageName: document.getElementById('profile-page-name'),
+    profilePageEmail: document.getElementById('profile-page-email'),
+    editProfileBtn: document.getElementById('edit-profile-btn'),
+    editProfileForm: document.getElementById('edit-profile-form'),
+    editNickname: document.getElementById('edit-nickname'),
+    editNicknameStatus: document.getElementById('edit-nickname-status'),
+    editProfileImageUrl: document.getElementById('edit-profile-image-url'),
+    
+    // 페이지 내비게이션
+    navLinks: document.querySelectorAll('.nav-menu a'),
     pages: document.querySelectorAll('.page'),
-    getStartedBtn: document.getElementById('get-started-btn')
+    getStartedBtn: document.getElementById('get-started-btn'),
+    
+    // 알림
+    notification: document.getElementById('notification'),
+    notificationMessage: document.getElementById('notification-message')
+};
+
+// 앱 상태
+const appState = {
+    isAuthenticated: false,
+    user: null,
+    accessToken: null,
+    refreshToken: null,
+    tempToken: null
 };
 
 // 유틸리티 함수
 const utils = {
-    // 알림 표시
-    showNotification: (message, isSuccess = true) => {
-        elements.notificationMessage.textContent = message;
-        elements.notificationModal.style.display = 'block';
-        elements.notificationModal.style.backgroundColor = 
-            isSuccess ? 'var(--success-color)' : 'var(--danger-color)';
-        
-        setTimeout(() => {
-            elements.notificationModal.style.display = 'none';
-        }, 3000);
-    },
-    
-    // 모달 열기/닫기
-    openModal: (modal) => { modal.style.display = 'block'; },
-    closeModal: (modal) => { modal.style.display = 'none'; },
-    
-    // 탭 전환
-    switchTab: (tabs, tabContents, activeTab) => {
-        tabs.forEach(tab => tab.classList.remove('active'));
-        tabContents.forEach(content => content.classList.remove('active'));
-        
-        activeTab.classList.add('active');
-        const tabId = activeTab.dataset.tab;
-        document.getElementById(`${tabId}-tab`).classList.add('active');
-    },
-    
-    // 페이지 변경
-    changePage: (pageId) => {
-        elements.navLinks.forEach(link => link.classList.remove('active'));
-        elements.pages.forEach(page => page.classList.remove('active'));
-        
-        document.querySelector(`[data-page="${pageId}"]`)?.classList.add('active');
-        document.getElementById(`${pageId}-page`).classList.add('active');
-    },
-    
-    // JWT 토큰 파싱
+    // JWT 토큰에서 정보 추출
     parseJwt: (token) => {
         try {
             const base64Url = token.split('.')[1];
@@ -103,21 +84,68 @@ const utils = {
             console.error('JWT 파싱 오류:', error);
             return null;
         }
+    },
+    
+    // URL 파라미터 가져오기
+    getUrlParams: () => {
+        const params = {};
+        const searchParams = new URLSearchParams(window.location.search);
+        for (const [key, value] of searchParams.entries()) {
+            params[key] = value;
+        }
+        return params;
+    },
+
+        // 알림 표시
+    showNotification: (message, isSuccess = true) => {
+        elements.notificationMessage.textContent = message;
+        elements.notification.style.display = 'block';
+        elements.notification.querySelector('.notification-content').style.backgroundColor = 
+            isSuccess ? 'var(--success-color)' : 'var(--danger-color)';
+        
+        setTimeout(() => {
+            elements.notification.style.display = 'none';
+        }, 3000);
+    },
+    
+    // 페이지 변경
+    changePage: (pageId) => {
+        elements.navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.page === pageId) {
+                link.classList.add('active');
+            }
+        });
+        
+        elements.pages.forEach(page => {
+            page.classList.remove('active');
+        });
+        
+        document.getElementById(`${pageId}-page`).classList.add('active');
+    },
+    
+    // 모달 열기
+    openModal: (modal) => {
+        modal.style.display = 'block';
+    },
+    
+    // 모달 닫기
+    closeModal: (modal) => {
+        modal.style.display = 'none';
     }
 };
 
 // API 서비스
 const apiService = {
-    // API 요청 보내기
+    // API 요청 기본 설정
     request: async (endpoint, method = 'GET', data = null, requiresAuth = true) => {
         try {
-            appState.isLoading = true;
-            
             const url = `${API_BASE_URL}${endpoint}`;
             const headers = {
                 'Content-Type': 'application/json'
             };
             
+            // 인증 토큰 설정
             if (requiresAuth && appState.accessToken) {
                 headers['Authorization'] = `Bearer ${appState.accessToken}`;
             }
@@ -128,231 +156,238 @@ const apiService = {
                 credentials: 'include'
             };
             
-            if (data && (method === 'POST' || method === 'PUT')) {
+            if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
                 config.body = JSON.stringify(data);
             }
             
             const response = await fetch(url, config);
             
+            // 인증 오류 처리
             if (response.status === 401) {
-                // 인증 실패 - 토큰이 만료되었을 수 있음
+                // 액세스 토큰 만료, 리프레시 토큰으로 갱신 시도
                 const refreshed = await authService.refreshToken();
                 if (refreshed) {
-                    // 새 토큰으로 요청 재시도
+                    // 토큰 갱신 성공 시 요청 재시도
                     headers['Authorization'] = `Bearer ${appState.accessToken}`;
                     const retryConfig = { ...config, headers };
                     const retryResponse = await fetch(url, retryConfig);
-                    const retryData = await retryResponse.json();
-                    appState.isLoading = false;
-                    return retryData;
+                    return await retryResponse.json();
                 } else {
-                    // 토큰 갱신 실패, 다시 로그인 필요
+                    // 토큰 갱신 실패 시 로그아웃
                     authService.logout();
-                    throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.');
+                    utils.showNotification('세션이 만료되었습니다. 다시 로그인해주세요.', false);
+                    throw new Error('인증 만료');
                 }
             }
             
-            const responseData = await response.json();
-            appState.isLoading = false;
-            return responseData;
+            // 응답 반환
+            return await response.json();
         } catch (error) {
-            appState.isLoading = false;
             console.error('API 요청 오류:', error);
             throw error;
         }
     },
     
-    // API 엔드포인트 함수들
+    // 닉네임 중복 확인
     checkNickname: async (nickname) => {
         return await apiService.request(
             `/api/v1/auth/check-nickname?nickname=${encodeURIComponent(nickname)}`,
-            'GET', null, false
+            'GET',
+            null,
+            false
         );
     },
     
+    // 회원가입
     register: async (userData) => {
         return await apiService.request('/api/v1/auth/register', 'POST', userData, false);
     },
     
+    // 로그인
+    login: async (encodedData) => {
+        return await apiService.request('/api/v1/auth/login', 'POST', { encodedData }, false);
+    },
+    
+    // 토큰 검증
+    validateToken: async () => {
+        return await apiService.request('/api/v1/auth/token/validate', 'GET');
+    },
+    
+    // 토큰 새로고침
+    refreshToken: async (refreshToken) => {
+        return await apiService.request('/api/v1/auth/refresh', 'POST', { refreshToken }, false);
+    },
+    
+    // 로그아웃
+    logout: async (refreshToken) => {
+        return await apiService.request('/api/v1/auth/logout', 'POST', { refreshToken });
+    },
+    
+    // 사용자 정보 가져오기
     getUserInfo: async () => {
         return await apiService.request('/api/v1/auth/user-info', 'GET');
     },
     
+    // 프로필 업데이트
     updateProfile: async (profileData) => {
         return await apiService.request('/api/v1/auth/profile', 'PUT', profileData);
     },
     
-    deleteAccount: async () => {
+    // 계정 탈퇴
+    withdrawUser: async () => {
         return await apiService.request('/api/v1/auth/withdraw', 'POST');
-    },
-    
-    validateToken: async () => {
-        try {
-            return await apiService.request('/api/v1/auth/token/validate', 'GET');
-        } catch (error) {
-            return { valid: false };
-        }
     }
 };
 
 // 인증 서비스
 const authService = {
-    // 초기화
+    // 인증 초기화
     init: () => {
-        const accessToken = localStorage.getItem('accessToken');
-        const refreshToken = localStorage.getItem('refreshToken');
-        const tempToken = localStorage.getItem('tempToken');
+        // 로컬 스토리지에서 토큰 가져오기
+        const accessToken = localStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN);
+        const refreshToken = localStorage.getItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
+        const tempToken = localStorage.getItem(LOCAL_STORAGE_KEYS.TEMP_TOKEN);
         
-        if (accessToken) {
+        if (accessToken && refreshToken) {
             appState.accessToken = accessToken;
-            authService.validateSession();
-        }
-        
-        if (refreshToken) {
             appState.refreshToken = refreshToken;
+            // 토큰 유효성 검사
+            authService.validateSession();
         }
         
         if (tempToken) {
             appState.tempToken = tempToken;
-            // 회원가입 모달 표시
-            utils.openModal(elements.authModal);
-            utils.switchTab(
-                elements.tabBtns,
-                [elements.loginTab, elements.registerTab],
-                document.querySelector('.tab-btn[data-tab="register"]')
-            );
         }
-    },
-    
-    // 토큰 새로고침
-    refreshToken: async () => {
-        try {
-            if (!appState.refreshToken) return false;
-            
-            const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refreshToken: appState.refreshToken }),
-                credentials: 'include'
-            });
-            
-            if (!response.ok) return false;
-            
-            const data = await response.json();
-            
-            if (data.success && data.data) {
-                authService.setTokens(data.data.accessToken, data.data.refreshToken);
-                return true;
-            }
-            
-            return false;
-        } catch (error) {
-            console.error('토큰 갱신 오류:', error);
-            return false;
-        }
-    },
-    
-    // 토큰 설정
-    setTokens: (accessToken, refreshToken) => {
-        appState.accessToken = accessToken;
-        appState.refreshToken = refreshToken;
         
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+        // URL 파라미터 처리
+        const urlParams = utils.getUrlParams();
+        
+        // 임시 토큰 처리 (회원가입용)
+        if (urlParams.token) {
+            localStorage.setItem(LOCAL_STORAGE_KEYS.TEMP_TOKEN, urlParams.token);
+            appState.tempToken = urlParams.token;
+            
+            // URL에서 토큰 파라미터 제거
+            const url = new URL(window.location.href);
+            url.searchParams.delete('token');
+            window.history.replaceState({}, document.title, url);
+            
+            // 회원가입 모달 표시
+            setTimeout(() => {
+                utils.openModal(elements.authModal);
+                // 회원가입 탭으로 전환
+                elements.tabBtns.forEach(btn => {
+                    if (btn.dataset.tab === 'register') {
+                        btn.click();
+                    }
+                });
+            }, 500);
+        }
+        
+        // OAuth 콜백 데이터 처리 (로그인용)
+        if (urlParams.data) {
+            try {
+                const encodedData = urlParams.data;
+                // data 파라미터로 로그인 처리
+                authService.loginWithEncodedData(encodedData);
+                
+                // URL에서 data 파라미터 제거
+                const url = new URL(window.location.href);
+                url.searchParams.delete('data');
+                window.history.replaceState({}, document.title, url);
+            } catch (error) {
+                console.error('OAuth 콜백 데이터 처리 오류:', error);
+            }
+        }
     },
     
-    // 세션 검증
+    // 세션 유효성 검사
     validateSession: async () => {
         try {
             const response = await apiService.validateToken();
             
             if (response.success && response.data.valid) {
-                await userService.fetchUserInfo();
+                // 토큰이 유효한 경우 사용자 정보 가져오기
+                await authService.getUserInfo();
                 return true;
+            } else {
+                // 토큰이 유효하지 않은 경우 리프레시 토큰으로 갱신 시도
+                const refreshed = await authService.refreshToken();
+                if (refreshed) {
+                    await authService.getUserInfo();
+                    return true;
+                } else {
+                    // 갱신 실패 시 로그아웃
+                    authService.logout(false);
+                    return false;
+                }
             }
-            
-            // 토큰이 유효하지 않음, 새로고침 시도
-            const refreshed = await authService.refreshToken();
-            if (refreshed) {
-                await userService.fetchUserInfo();
-                return true;
-            }
-            
-            authService.clearAuth();
-            return false;
         } catch (error) {
             console.error('세션 검증 오류:', error);
-            authService.clearAuth();
+            authService.logout(false);
             return false;
         }
     },
     
-    // 로그아웃
-    logout: async () => {
+    // 인코딩된 데이터로 로그인
+    loginWithEncodedData: async (encodedData) => {
         try {
-            if (appState.refreshToken) {
-                await apiService.request(
-                    '/api/v1/auth/logout',
-                    'POST',
-                    { refreshToken: appState.refreshToken }
+            const response = await apiService.login(encodedData);
+            
+            if (response.success && response.data) {
+                // 토큰 저장
+                authService.setTokens(
+                    response.data.accessToken,
+                    response.data.refreshToken,
+                    response.data.user
                 );
+                utils.showNotification('로그인되었습니다.');
+                return true;
+            } else {
+                utils.showNotification(
+                    response.error?.message || '로그인에 실패했습니다.',
+                    false
+                );
+                return false;
             }
         } catch (error) {
-            console.error('로그아웃 중 오류 발생:', error);
+            console.error('로그인 오류:', error);
+            utils.showNotification('로그인 처리 중 오류가 발생했습니다.', false);
+            return false;
         }
-        
-        authService.clearAuth();
-        uiService.updateAuthUI();
-        utils.changePage('home');
-        utils.showNotification('로그아웃되었습니다', true);
     },
     
-    // 인증 데이터 삭제
-    clearAuth: () => {
-        appState.user = null;
-        appState.accessToken = null;
-        appState.refreshToken = null;
-        appState.tempToken = null;
-        
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('tempToken');
-    }
-};
-
-// 사용자 서비스
-const userService = {
     // 사용자 정보 가져오기
-    fetchUserInfo: async () => {
+    getUserInfo: async () => {
         try {
             const response = await apiService.getUserInfo();
             
             if (response.success && response.data) {
                 appState.user = response.data;
-                uiService.updateAuthUI();
+                appState.isAuthenticated = true;
+                authService.updateAuthUI();
                 return true;
+            } else {
+                return false;
             }
-            
-            return false;
         } catch (error) {
             console.error('사용자 정보 가져오기 오류:', error);
             return false;
         }
     },
     
-    // 새 사용자 등록
+    // 회원가입
     register: async (formData) => {
         try {
-            // localStorage 또는 appState에서 tempToken 가져오기
-            const tempToken = localStorage.getItem('tempToken') || appState.tempToken;
+            const tempToken = localStorage.getItem(LOCAL_STORAGE_KEYS.TEMP_TOKEN);
             
             if (!tempToken) {
-                utils.showNotification('유효한 임시 토큰이 없습니다. 다시 로그인해 주세요.', false);
+                utils.showNotification('유효한 임시 토큰이 없습니다.', false);
                 return false;
             }
             
             const userData = {
-                tempToken: tempToken,
+                tempToken,
                 name: formData.get('name'),
                 nickname: formData.get('nickname'),
                 profileImageUrl: formData.get('profileImageUrl')
@@ -361,61 +396,174 @@ const userService = {
             const response = await apiService.register(userData);
             
             if (response.success && response.data) {
-                const { accessToken, refreshToken, user } = response.data;
-                authService.setTokens(accessToken, refreshToken);
-                appState.user = user;
+                // 토큰 저장
+                authService.setTokens(
+                    response.data.accessToken,
+                    response.data.refreshToken,
+                    response.data.user
+                );
                 
                 // 임시 토큰 삭제
-                localStorage.removeItem('tempToken');
+                localStorage.removeItem(LOCAL_STORAGE_KEYS.TEMP_TOKEN);
                 appState.tempToken = null;
                 
-                uiService.updateAuthUI();
+                utils.showNotification('회원가입이 완료되었습니다.');
                 utils.closeModal(elements.authModal);
-                utils.showNotification('회원가입이 완료되었습니다!', true);
                 return true;
+            } else {
+                utils.showNotification(
+                    response.error?.message || '회원가입에 실패했습니다.',
+                    false
+                );
+                return false;
             }
-            
-            utils.showNotification(response.error?.message || '회원가입에 실패했습니다', false);
-            return false;
         } catch (error) {
-            console.error('회원가입 중 오류 발생:', error);
-            utils.showNotification('회원가입 실패: ' + error.message, false);
+            console.error('회원가입 오류:', error);
+            utils.showNotification('회원가입 처리 중 오류가 발생했습니다.', false);
             return false;
         }
-    }
-};
-
-// UI 서비스
-const uiService = {
-    // 로그인 상태에 따라 인증 UI 업데이트
+    },
+    
+    // 토큰 새로고침
+    refreshToken: async () => {
+        try {
+            if (!appState.refreshToken) return false;
+            
+            const response = await apiService.refreshToken(appState.refreshToken);
+            
+            if (response.success && response.data) {
+                // 새 토큰 저장
+                localStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, response.data.accessToken);
+                localStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, response.data.refreshToken);
+                
+                appState.accessToken = response.data.accessToken;
+                appState.refreshToken = response.data.refreshToken;
+                
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            console.error('토큰 갱신 오류:', error);
+            return false;
+        }
+    },
+    
+    // 로그아웃
+    logout: async (showNotification = true) => {
+        try {
+            if (appState.refreshToken) {
+                await apiService.logout(appState.refreshToken);
+            }
+        } catch (error) {
+            console.error('로그아웃 오류:', error);
+        }
+        
+        // 로컬 스토리지 및 상태 초기화
+        localStorage.removeItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
+        
+        appState.isAuthenticated = false;
+        appState.user = null;
+        appState.accessToken = null;
+        appState.refreshToken = null;
+        
+        authService.updateAuthUI();
+        
+        if (showNotification) {
+            utils.showNotification('로그아웃되었습니다.');
+        }
+        
+        // 홈 페이지로 이동
+        utils.changePage('home');
+    },
+    
+    // 토큰 설정
+    setTokens: (accessToken, refreshToken, user) => {
+        localStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+        localStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+        
+        appState.accessToken = accessToken;
+        appState.refreshToken = refreshToken;
+        appState.user = user;
+        appState.isAuthenticated = true;
+        
+        authService.updateAuthUI();
+    },
+    
+    // 인증 UI 업데이트
     updateAuthUI: () => {
-        if (appState.user) {
-            // 사용자 로그인됨
+        if (appState.isAuthenticated && appState.user) {
             elements.loginBtn.style.display = 'none';
             elements.userProfile.style.display = 'flex';
-            elements.profileImg.src = appState.user.profileImageUrl || 'https://via.placeholder.com/32';
             elements.userName.textContent = appState.user.nickname || appState.user.name;
+            elements.profileImg.src = appState.user.profileImageUrl || 'https://via.placeholder.com/40';
+            
+            // 프로필 페이지 정보 업데이트
+            elements.profilePageImg.src = appState.user.profileImageUrl || 'https://via.placeholder.com/150';
+            elements.profilePageName.textContent = appState.user.nickname || appState.user.name;
+            elements.profilePageEmail.textContent = appState.user.email || '이메일 정보 없음';
         } else {
-            // 사용자 로그아웃됨
             elements.loginBtn.style.display = 'block';
             elements.userProfile.style.display = 'none';
+        }
+    },
+    
+    // 프로필 업데이트
+    updateProfile: async (formData) => {
+        try {
+            const profileData = {
+                nickname: formData.get('nickname'),
+                profileImageUrl: formData.get('profileImageUrl')
+            };
+            
+            const response = await apiService.updateProfile(profileData);
+            
+            if (response.success && response.data) {
+                appState.user = response.data;
+                authService.updateAuthUI();
+                utils.closeModal(elements.editProfileModal);
+                utils.showNotification('프로필이 업데이트되었습니다.');
+                return true;
+            } else {
+                utils.showNotification(
+                    response.error?.message || '프로필 업데이트에 실패했습니다.',
+                    false
+                );
+                return false;
+            }
+        } catch (error) {
+            console.error('프로필 업데이트 오류:', error);
+            utils.showNotification('프로필 업데이트 중 오류가 발생했습니다.', false);
+            return false;
         }
     }
 };
 
 // 이벤트 핸들러
 const eventHandlers = {
-    // 모든 이벤트 리스너 초기화
     init: () => {
-        // 로그인 버튼
-        elements.loginBtn.addEventListener('click', () => {
-            utils.openModal(elements.authModal);
+        // 탭 전환
+        elements.tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabType = btn.dataset.tab;
+                
+                // 탭 버튼 활성화
+                elements.tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // 탭 콘텐츠 활성화
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${tabType}-tab`).classList.add('active');
+            });
         });
         
         // 모달 닫기 버튼
-        elements.modalCloseButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const modal = e.target.closest('.modal');
+        elements.modalCloses.forEach(closeBtn => {
+            closeBtn.addEventListener('click', () => {
+                const modal = closeBtn.closest('.modal');
                 utils.closeModal(modal);
             });
         });
@@ -427,32 +575,51 @@ const eventHandlers = {
             }
         });
         
-        // 탭 전환
-        elements.tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                utils.switchTab(
-                    elements.tabBtns,
-                    [elements.loginTab, elements.registerTab],
-                    btn
-                );
+        // 로그인 버튼
+        elements.loginBtn.addEventListener('click', () => {
+            utils.openModal(elements.authModal);
+        });
+        
+        // 로그아웃 버튼
+        elements.logoutBtn.addEventListener('click', () => {
+            authService.logout();
+        });
+        
+        // 소셜 로그인 버튼
+        elements.kakaoLogin.addEventListener('click', () => {
+            window.location.href = `${API_BASE_URL}/oauth2/authorization/kakao`;
+        });
+        
+        elements.naverLogin.addEventListener('click', () => {
+            window.location.href = `${API_BASE_URL}/oauth2/authorization/naver`;
+        });
+        
+        // 아바타 선택
+        document.querySelectorAll('.avatar-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const parent = option.closest('.avatar-selection');
+                parent.querySelectorAll('.avatar-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+                
+                const imageUrl = option.querySelector('img').dataset.url;
+                const form = option.closest('form');
+                
+                if (form.id === 'register-form') {
+                    elements.profileImageUrl.value = imageUrl;
+                } else if (form.id === 'edit-profile-form') {
+                    elements.editProfileImageUrl.value = imageUrl;
+                }
             });
         });
         
-        // OAuth 로그인 버튼
-        document.querySelector('.oauth-btn.kakao').addEventListener('click', () => {
-            window.location.href = OAUTH_URLS.KAKAO;
-        });
-        
-        document.querySelector('.oauth-btn.naver').addEventListener('click', () => {
-            window.location.href = OAUTH_URLS.NAVER;
-        });
-        
-        // 닉네임 유효성 검사
+        // 닉네임 입력 시 중복 확인
         elements.nicknameInput.addEventListener('input', async () => {
             const nickname = elements.nicknameInput.value.trim();
             
-            if (nickname.length < 3) {
-                elements.nicknameStatus.textContent = '닉네임은 최소 3자 이상이어야 합니다';
+            if (nickname.length < 2) {
+                elements.nicknameStatus.textContent = '닉네임은 2자 이상이어야 합니다.';
                 elements.nicknameStatus.style.color = 'var(--warning-color)';
                 return;
             }
@@ -463,32 +630,88 @@ const eventHandlers = {
                 if (response.success) {
                     const available = response.data.available;
                     elements.nicknameStatus.textContent = available ? 
-                        '사용 가능한 닉네임입니다' : '이미 사용 중인 닉네임입니다';
+                        '사용 가능한 닉네임입니다.' : '이미 사용 중인 닉네임입니다.';
                     elements.nicknameStatus.style.color = available ? 
                         'var(--success-color)' : 'var(--danger-color)';
                 }
             } catch (error) {
-                console.error('닉네임 확인 오류:', error);
+                console.error('닉네임 중복 확인 오류:', error);
             }
         });
         
-        // 회원가입 아바타 선택
-        elements.avatarOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                elements.avatarOptions.forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                elements.profileImageUrl.value = option.querySelector('img').dataset.url;
-            });
+        // 프로필 수정 시 닉네임 중복 확인
+        elements.editNickname.addEventListener('input', async () => {
+            const nickname = elements.editNickname.value.trim();
+            
+            if (nickname.length < 2) {
+                elements.editNicknameStatus.textContent = '닉네임은 2자 이상이어야 합니다.';
+                elements.editNicknameStatus.style.color = 'var(--warning-color)';
+                return;
+            }
+            
+            // 현재 닉네임과 같으면 중복 확인 불필요
+            if (nickname === appState.user.nickname) {
+                elements.editNicknameStatus.textContent = '현재 사용 중인 닉네임입니다.';
+                elements.editNicknameStatus.style.color = 'var(--success-color)';
+                return;
+            }
+            
+            try {
+                const response = await apiService.checkNickname(nickname);
+                
+                if (response.success) {
+                    const available = response.data.available;
+                    elements.editNicknameStatus.textContent = available ? 
+                        '사용 가능한 닉네임입니다.' : '이미 사용 중인 닉네임입니다.';
+                    elements.editNicknameStatus.style.color = available ? 
+                        'var(--success-color)' : 'var(--danger-color)';
+                }
+            } catch (error) {
+                console.error('닉네임 중복 확인 오류:', error);
+            }
         });
         
         // 회원가입 폼 제출
         elements.registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(elements.registerForm);
-            await userService.register(formData);
+            await authService.register(formData);
         });
         
-        // 네비게이션 메뉴
+        // 프로필 수정 폼 제출
+        elements.editProfileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(elements.editProfileForm);
+            await authService.updateProfile(formData);
+        });
+        
+        // 내 프로필 버튼
+        elements.myProfile.addEventListener('click', (e) => {
+            e.preventDefault();
+            utils.changePage('profile');
+        });
+        
+        // 프로필 수정 버튼
+        elements.editProfileBtn.addEventListener('click', () => {
+            // 현재 사용자 정보로 폼 초기화
+            elements.editNickname.value = appState.user.nickname || '';
+            elements.editProfileImageUrl.value = appState.user.profileImageUrl || 'https://via.placeholder.com/200/ff9800/ffffff?text=1';
+            
+            // 프로필 이미지 선택 업데이트
+            const avatarOptions = elements.editProfileModal.querySelectorAll('.avatar-option');
+            avatarOptions.forEach(option => {
+                const imageUrl = option.querySelector('img').dataset.url;
+                if (imageUrl === appState.user.profileImageUrl) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+            
+            utils.openModal(elements.editProfileModal);
+        });
+        
+        // 네비게이션 링크
         elements.navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -499,48 +722,20 @@ const eventHandlers = {
         
         // 시작하기 버튼
         elements.getStartedBtn.addEventListener('click', () => {
-            if (appState.user) {
+            if (appState.isAuthenticated) {
                 utils.changePage('trainers');
             } else {
                 utils.openModal(elements.authModal);
             }
         });
-        
-        // 프로필 버튼
-        elements.profileBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            utils.changePage('profile');
-        });
-        
-        // 로그아웃 버튼
-        elements.logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            authService.logout();
-        });
     }
 };
 
 // 앱 초기화
-const initApp = async () => {
-    console.log('펫톡 앱 초기화 중...');
-    
-    // 인증 초기화
-    authService.init();
-    
-    // 이벤트 리스너 설정
+document.addEventListener('DOMContentLoaded', () => {
+    // 이벤트 핸들러 초기화
     eventHandlers.init();
     
-    // 인증 상태에 따라 UI 업데이트
-    uiService.updateAuthUI();
-    
-    // 페이지 변경 필요한지 확인
-    const pageId = window.location.hash.slice(1);
-    if (pageId) {
-        utils.changePage(pageId);
-    }
-    
-    console.log(`펫톡 프론트엔드가 백엔드 API에 연결됨: ${API_BASE_URL}`);
-};
-
-// 앱 실행
-document.addEventListener('DOMContentLoaded', initApp);
+    // 인증 상태 초기화
+    authService.init();
+});
