@@ -241,9 +241,9 @@ const apiService = {
 
 // 인증 서비스
 const authService = {
-    // 인증 초기화
-    init: () => {
-        // 로컬 스토리지에서 토큰 가져오기
+        // 인증 초기화
+        init: () => {
+            // 로컬 스토리지에서 토큰 가져오기
         const accessToken = localStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN);
         const refreshToken = localStorage.getItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
         const tempToken = localStorage.getItem(LOCAL_STORAGE_KEYS.TEMP_TOKEN);
@@ -257,6 +257,15 @@ const authService = {
         
         if (tempToken) {
             appState.tempToken = tempToken;
+        }
+        
+        // 세션 스토리지에서 OAuth 데이터 확인
+        const oauthData = sessionStorage.getItem('oauthData');
+        if (oauthData) {
+            // OAuth 데이터로 로그인 처리
+            authService.loginWithEncodedData(oauthData);
+            // 처리 후 세션 스토리지에서 삭제
+            sessionStorage.removeItem('oauthData');
         }
         
         // URL 파라미터 처리

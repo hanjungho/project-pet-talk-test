@@ -34,6 +34,20 @@
         }
         }
     </script>
+    <script>
+        // 페이지 로드 시 즉시 실행되는 스크립트
+        document.addEventListener('DOMContentLoaded', function() {
+        // URL에서 data 파라미터 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        const data = urlParams.get('data');
+        
+        if (data && window.location.pathname.includes('/oauth/callback')) {
+            // 루트 경로로 리다이렉트하면서 데이터 전달
+            sessionStorage.setItem('oauthData', data);
+            window.location.href = '/';
+        }
+        });
+    </script>
 </head>
 <body>
     <header class="header">
@@ -249,6 +263,6 @@
         </div>
     </div>
 
-    <script src="scripts.js"></script>
+    <script src="scripts.js"></scrip>
 </body>
 </html>
