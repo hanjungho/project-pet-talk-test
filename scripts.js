@@ -47,6 +47,12 @@ const elements = {
     editNickname: document.getElementById('edit-nickname'),
     editNicknameStatus: document.getElementById('edit-nickname-status'),
     editProfileImageUrl: document.getElementById('edit-profile-image-url'),
+
+    // 회원 탈퇴 관련
+    withdrawBtn: document.getElementById('withdraw-btn'),
+    withdrawModal: document.getElementById('withdraw-modal'),
+    cancelWithdrawBtn: document.getElementById('cancel-withdraw-btn'),
+    confirmWithdrawBtn: document.getElementById('confirm-withdraw-btn'),
     
     // 페이지 내비게이션
     navLinks: document.querySelectorAll('.nav-menu a'),
@@ -735,6 +741,51 @@ const eventHandlers = {
                 utils.changePage('trainers');
             } else {
                 utils.openModal(elements.authModal);
+            }
+        });
+
+        // 회원 탈퇴 버튼
+        elements.withdrawBtn.addEventListener('click', () => {
+            utils.openModal(elements.withdrawModal);
+        });
+        
+        // 탈퇴 취소 버튼
+        elements.cancelWithdrawBtn.addEventListener('click', () => {
+            utils.closeModal(elements.withdrawModal);
+        });
+        
+        // 탈퇴 확인 버튼
+        elements.confirmWithdrawBtn.addEventListener('click', async () => {
+            try {
+                const response = await apiService.withdrawUser();
+                
+                if (response.success) {
+                    utils.closeModal(elements.withdrawModal);
+                    
+                    // 로그아웃과 동일한 처리
+                    localStorage.removeItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN);
+                    localStorage.removeItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
+                    
+                    appState.isAuthenticated = false;
+                    appState.user = null;
+                    appState.accessToken = null;
+                    appState.refreshToken = null;
+                    
+                    authService.updateAuthUI();
+                    
+                    utils.showNotification('회원 탈퇴가 완료되었습니다.');
+                    
+                    // 홈 페이지로 이동
+                    utils.changePage('home');
+                } else {
+                    utils.showNotification(
+                        response.error?.message || '회원 탈퇴 처리 중 오류가 발생했습니다.',
+                        false
+                    );
+                }
+            } catch (error) {
+                console.error('회원 탈퇴 처리 중 오류:', error);
+                utils.showNotification('회원 탈퇴 처리 중 오류가 발생했습니다.', false);
             }
         });
     }

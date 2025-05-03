@@ -151,7 +151,10 @@
                         <div>
                             <h3 id="profile-page-name">사용자 이름</h3>
                             <p id="profile-page-email">user@example.com</p>
-                            <button class="btn btn-secondary" id="edit-profile-btn">프로필 수정</button>
+                            <div class="profile-actions">
+                                <button class="btn btn-secondary" id="edit-profile-btn">프로필 수정</button>
+                                <button class="btn btn-danger" id="withdraw-btn">회원 탈퇴</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -253,6 +256,19 @@
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">저장</button>
             </form>
+        </div>
+    </div>
+
+    <!-- 회원 탈퇴 확인 모달 -->
+    <div id="withdraw-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>회원 탈퇴</h2>
+            <p>정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancel-withdraw-btn">취소</button>
+                <button class="btn btn-danger" id="confirm-withdraw-btn">탈퇴 확인</button>
+            </div>
         </div>
     </div>
 
