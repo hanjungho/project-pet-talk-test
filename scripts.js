@@ -387,7 +387,7 @@ const authService = {
             }
             
             const userData = {
-                tempToken,
+                tempToken: tempToken,
                 name: formData.get('name'),
                 nickname: formData.get('nickname'),
                 profileImageUrl: formData.get('profileImageUrl')
