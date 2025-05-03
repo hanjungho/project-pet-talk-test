@@ -6,6 +6,34 @@
     <title>PetTalk - 반려동물 훈련 및 상담 서비스</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- index.html의 <head> 섹션에 추가 -->
+    <script>
+        // 리다이렉트 정보 확인
+        const redirect = sessionStorage.getItem('redirect');
+        if (redirect) {
+        // 저장된 정보 파싱
+        const { path, params } = JSON.parse(redirect);
+        // 세션 스토리지에서 삭제
+        sessionStorage.removeItem('redirect');
+        
+        // 스크립트로 파라미터 처리
+        if (path === '/register') {
+            const urlParams = new URLSearchParams(params);
+            const token = urlParams.get('token');
+            if (token) {
+            localStorage.setItem('tempToken', token);
+            // 회원가입 모달 표시 로직 실행
+            window.addEventListener('DOMContentLoaded', function() {
+                setTimeout(() => {
+                document.getElementById('auth-modal').style.display = 'block';
+                // 회원가입 탭으로 전환
+                document.querySelector('.tab-btn[data-tab="register"]').click();
+                }, 500);
+            });
+            }
+        }
+        }
+    </script>
 </head>
 <body>
     <header class="header">
