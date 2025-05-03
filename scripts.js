@@ -1,5 +1,5 @@
 // 기본 설정
-const API_BASE_URL = 'http://localhost:8443'; // 실제 배포 시 변경 필요
+const API_BASE_URL = 'https://dev.tuituiworld.store'; // 실제 배포 시 변경 필요
 const LOCAL_STORAGE_KEYS = {
     ACCESS_TOKEN: 'accessToken',
     REFRESH_TOKEN: 'refreshToken',
